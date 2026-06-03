@@ -1,0 +1,77 @@
+import 'package:flutter/material.dart';
+import '../models/user_profile.dart';
+import '../services/settings_service.dart';
+
+/// Manages settings state: theme, auto-encrypt flag, user profile, last read positions.
+class SettingsProvider extends ChangeNotifier {
+  final SettingsService _service;
+
+  SettingsProvider(this._service) {
+    _init();
+  }
+
+  ThemeMode _themeMode = ThemeMode.system;
+  bool _autoEncrypt = false;
+  UserProfile _userProfile = const UserProfile();
+
+  ThemeMode get themeMode => _themeMode;
+  bool get autoEncrypt => _autoEncrypt;
+  UserProfile get userProfile => _userProfile;
+
+  int? getLastReadPage(String path) => _service.getLastReadPage(path);
+
+  Future<void> setLastReadPage(String path, int page) =>
+      _service.setLastReadPage(path, page);
+
+  void _init() {
+    _themeMode = _themeModeFromString(_service.themeMode);
+    _autoEncrypt = _service.autoEncrypt;
+    _userProfile = _service.userProfile;
+  }
+
+  Future<void> setThemeMode(ThemeMode mode) async {
+    _themeMode = mode;
+    await _service.setThemeMode(_themeModeToString(mode));
+    notifyListeners();
+  }
+
+  Future<void> setAutoEncrypt(bool value) async {
+    _autoEncrypt = value;
+    await _service.setAutoEncrypt(value);
+    notifyListeners();
+  }
+
+  Future<void> updateUserProfile(UserProfile profile) async {
+    _userProfile = profile;
+    await _service.setUserProfile(profile);
+    notifyListeners();
+  }
+
+  Future<void> reload() async {
+    _init();
+    notifyListeners();
+  }
+
+  // --- Helpers ---
+  static ThemeMode _themeModeFromString(String s) {
+    switch (s) {
+      case 'light':
+        return ThemeMode.light;
+      case 'dark':
+        return ThemeMode.dark;
+      default:
+        return ThemeMode.system;
+    }
+  }
+
+  static String _themeModeToString(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.light:
+        return 'light';
+      case ThemeMode.dark:
+        return 'dark';
+      case ThemeMode.system:
+        return 'system';
+    }
+  }
+}
