@@ -14,7 +14,9 @@ class FileService {
     try {
       await for (final entity in dir.list(recursive: false, followLinks: false)) {
         if (entity is File &&
-            (entity.path.endsWith('.pdf') || entity.path.endsWith('.pdf.enc'))) {
+            (entity.path.endsWith('.pdf') ||
+             entity.path.endsWith('.pdf.enc') ||
+             entity.path.endsWith('.svg'))) {
           try {
             pdfFiles.add(PdfFile.fromFileSystem(entity));
           } catch (e) {
@@ -57,7 +59,8 @@ class FileService {
         for (final entity in entities) {
           if (entity is File &&
               (entity.path.endsWith('.pdf') ||
-                  entity.path.endsWith('.pdf.enc'))) {
+                  entity.path.endsWith('.pdf.enc') ||
+                  entity.path.endsWith('.svg'))) {
             try {
               pdfFiles.add(PdfFile.fromFileSystem(entity));
             } catch (e) {

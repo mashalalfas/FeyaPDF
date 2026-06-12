@@ -456,12 +456,20 @@ class AppState extends ChangeNotifier {
     return _currentDir?.split('/').last ?? '';
   }
 
-  /// Save a file to the app's local documents directory.
+  /// Save a file to a target directory, or the app's local documents MelodyPDF
+  /// folder if [targetDir] is null.
   /// Returns a [SaveResult] indicating success, alreadyExists, or failure.
-  Future<(SaveResult, String?)> saveToLocal(String sourcePath) async {
+  Future<(SaveResult, String?)> saveToLocal(String sourcePath, {String? targetDir}) async {
     try {
-      final docsDir = await getApplicationDocumentsDirectory();
-      final localDir = Directory('${docsDir.path}/MelodyPDF');
+      final String destDirPath;
+      if (targetDir != null) {
+        destDirPath = targetDir;
+      } else {
+        final docsDir = await getApplicationDocumentsDirectory();
+        destDirPath = '${docsDir.path}/MelodyPDF';
+      }
+
+      final localDir = Directory(destDirPath);
       if (!await localDir.exists()) {
         await localDir.create(recursive: true);
       }
