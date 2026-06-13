@@ -1,0 +1,89 @@
+import 'dart:convert';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:melody_pdf/models/tag.dart';
+import 'package:melody_pdf/services/tag_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+void main() {
+  group('TagService', () {
+    late TagService service;
+
+    setUp(() async {
+      // Reset SharedPreferences mock for each test
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      service = TagService(prefs);
+    });
+
+    test('getAllTags returns empty list when nothing stored', () {
+      expect(service.getAllTags(), isEmpty);
+    });
+
+    test('saveTags then getAllTags round-trips', () async {
+      final tags = [
+        Tag(id: 't1', name: 'Work', color: 0xFFE57373),
+        Tag(id: 't2', name: 'Personal', color: 0xFF81C784),
+      ];
+      await service.saveTags(tags);
+      expect(service.getAllTags(), equals(tags));
+    });
+
+    test('saveTags replaces existing data', () async {
+      await service.saveTags([Tag(id: 'old', name: 'Old', color: 0)]);
+      await service.saveTags([Tag(id: 'new', name: 'New', color: 1)]);
+      expect(service.getAllTags(), hasLength(1));
+      expect(service.getAllTags().first.id, equals('new'));
+    });
+
+    test('getAllTags returns empty list for corrupt JSON (not a list)', () async {
+      SharedPreferences.setMockInitialValues({'mely_pdf_tags': '{"bad": true}'});
+      final prefs = await SharedPreferences.getInstance();
+      final svc = TagService(prefs);
+      expect(svc.getAllTags(), isEmpty);
+    });
+
+    test('getAllTags returns empty list for completely corrupt string', () async {
+      SharedPreferences.setMockInitialValues({'mely_pdf_tags': 'not json at all'});
+      final prefs = await SharedPreferences.getInstance();
+      final svc = TagService(prefs);
+      expect(svc.getAllTags(), isEmpty);
+    });
+
+    test('getFileTagMap returns empty map when nothing stored', () {
+      expect(service.getFileTagMap(), isEmpty);
+    });
+
+    test('saveFileTagMap then getFileTagMap round-trips', () async {
+      final map = {
+        '/path/to/file.pdf': ['t1', 't2'],
+        '/path/to/other.pdf': ['t1'],
+      };
+      await service.saveFileTagMap(map);
+      expect(service.getFileTagMap(), equals(map));
+    });
+
+    test('saveFileTagMap replaces existing data', () async {
+      await service.saveFileTagMap({'/a.pdf': ['t1']});
+      await service.saveFileTagMap({'/b.pdf': ['t2']});
+      expect(service.getFileTagMap(), hasLength(1));
+      expect(service.getFileTagMap().keys.first, equals('/b.pdf'));
+    });
+
+    test('getFileTagMap returns empty map for corrupt JSON (not a map)', () async {
+      SharedPreferences.setMockInitialValues({'mely_pdf_file_tags': '[1,2,3]'});
+      final prefs = await SharedPreferences.getInstance();
+      final svc = TagService(prefs);
+      expect(svc.getFileTagMap(), isEmpty);
+    });
+
+    test('getFileTagMap ignores non-string values in list entries', () async {
+      // List contains an int entry which should be filtered out by whereType
+      final raw = jsonEncode({'/file.pdf': ['t1', 42, 't2']});
+      SharedPreferences.setMockInitialValues({'mely_pdf_file_tags': raw});
+      final prefs = await SharedPreferences.getInstance();
+      final svc = TagService(prefs);
+      final result = svc.getFileTagMap();
+      expect(result['/file.pdf'], equals(['t1', 't2']));
+    });
+  });
+}

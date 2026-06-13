@@ -4,9 +4,9 @@ import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:pdfrx/pdfrx.dart';
 import '../models/pdf_file.dart';
-import '../providers/app_state.dart';
 import '../providers/encryption_provider.dart';
 import '../providers/settings_provider.dart';
+import '../providers/file_operations_provider.dart';
 import '../widgets/passphrase_dialog.dart';
 
 class ViewerScreen extends StatefulWidget {
@@ -67,7 +67,6 @@ class _ViewerScreenState extends State<ViewerScreen> {
     }
 
     // --- PDF branch ---
-    final appState = context.read<AppState>();
     final encryption = context.read<EncryptionProvider>();
 
     // If encrypted and no passphrase, prompt
@@ -100,7 +99,8 @@ class _ViewerScreenState extends State<ViewerScreen> {
       // Build the PdfDocumentRef for this source
       if (widget.file.isEncrypted) {
         // Encrypted: must decrypt first, load into memory
-        final bytes = await appState.getPdfBytes(widget.file);
+        final fileOps = context.read<FileOperationsProvider>();
+    final bytes = await fileOps.getPdfBytes(widget.file);
         if (bytes == null || bytes.isEmpty || !mounted) {
           if (mounted) {
             setState(() {
@@ -210,11 +210,12 @@ class _ViewerScreenState extends State<ViewerScreen> {
   }
 
   Future<void> _shareFile() async {
-    await context.read<AppState>().shareFile(widget.file.path);
+    final fileOps = context.read<FileOperationsProvider>();
+    await fileOps.shareFile(widget.file.path);
   }
 
   Future<void> _saveToLocal() async {
-    final appState = context.read<AppState>();
+    final fileOps = context.read<FileOperationsProvider>();
 
     // Ask user to pick a destination directory
     final destDir = await FilePicker.platform.getDirectoryPath(
@@ -222,7 +223,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
     );
     if (destDir == null || !mounted) return;
 
-    final (result, newPath) = await appState.saveToLocal(
+    final (result, newPath) = await fileOps.saveToLocal(
       widget.file.path,
       targetDir: destDir,
     );

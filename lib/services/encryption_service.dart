@@ -93,7 +93,7 @@ class EncryptionService {
   static const _minLength = 5 + _ivLength + _saltLength + 1; // minimal valid file
 
   /// Encrypt a file on disk and write the encrypted payload to [outputPath]
-  /// (or to "<inputPath>.enc" if omitted). Returns the final output path.
+  /// (or to "`<inputPath>.enc`" if omitted). Returns the final output path.
   /// Writes header + ciphertext in one pass; renames temp file atomically.
   static Future<String> encryptFile(
     String inputPath,

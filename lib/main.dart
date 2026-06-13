@@ -6,6 +6,10 @@ import 'providers/encryption_provider.dart';
 import 'providers/secure_folder_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/tag_provider.dart';
+import 'providers/sort_search_provider.dart';
+import 'providers/recent_files_provider.dart';
+import 'providers/scanned_paths_provider.dart';
+import 'providers/file_operations_provider.dart';
 import 'services/settings_service.dart';
 import 'services/tag_service.dart';
 import 'services/intent_handler.dart';
@@ -29,6 +33,10 @@ void main() async {
           create: (_) => SettingsProvider(settingsService),
         ),
         ChangeNotifierProvider(create: (_) => TagProvider(tagService)),
+        ChangeNotifierProvider(create: (_) => SortSearchProvider()),
+        ChangeNotifierProvider(create: (_) => RecentFilesProvider()),
+        ChangeNotifierProvider(create: (_) => ScannedPathsProvider()),
+        ChangeNotifierProvider(create: (_) => FileOperationsProvider()),
         ChangeNotifierProvider(create: (_) => AppState()),
       ],
       child: const MelodyPdfApp(),
@@ -55,8 +63,15 @@ class _MelodyPdfAppState extends State<MelodyPdfApp> {
       if (!_wired && mounted) {
         _wired = true;
         final appState = context.read<AppState>();
-        appState.attachEncryption(context.read<EncryptionProvider>());
-        appState.attachSettings(context.read<SettingsProvider>());
+        final sortSearch = context.read<SortSearchProvider>();
+        final paths = context.read<ScannedPathsProvider>();
+        final fileOps = context.read<FileOperationsProvider>();
+
+        appState.attachSortSearch(sortSearch);
+        appState.attachScannedPaths(paths);
+
+        fileOps.attachEncryption(context.read<EncryptionProvider>());
+
         context
             .read<SecureFolderProvider>()
             .attachEncryption(context.read<EncryptionProvider>());

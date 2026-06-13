@@ -5,6 +5,10 @@ import 'package:file_picker/file_picker.dart';
 import '../providers/app_state.dart';
 import '../providers/encryption_provider.dart';
 import '../providers/tag_provider.dart';
+import '../providers/sort_search_provider.dart';
+import '../providers/file_operations_provider.dart';
+import '../providers/recent_files_provider.dart';
+import '../providers/scanned_paths_provider.dart';
 import '../models/pdf_file.dart';
 import '../widgets/file_list_tile.dart';
 import '../widgets/tag_chip.dart';
@@ -42,21 +46,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Future<void> _loadInitialData() async {
     final appState = context.read<AppState>();
-    await appState.loadRecentFiles();
-    await appState.loadScannedPaths();
+    final recentProvider = context.read<RecentFilesProvider>();
+    final pathsProvider = context.read<ScannedPathsProvider>();
 
-    // Check storage permission first
-    final hasPermission = await PermissionService.hasStoragePermission();
-    if (!hasPermission && mounted) {
-      final granted = await PermissionService.showPermissionDialog(context);
-      if (!granted) return;
-    }
+    await recentProvider.loadRecentFiles();
+    await pathsProvider.loadScannedPaths();
 
-    final persisted = await appState.loadPersistedDir();
+    final persisted = await pathsProvider.loadPersistedDir();
     if (persisted != null && await Directory(persisted).exists()) {
       await appState.loadDirectory(persisted);
-    } else if (appState.scannedPaths.isNotEmpty) {
-      await appState.loadAllDirectories();
+    } else if (pathsProvider.scannedPaths.isNotEmpty) {
+      await appState.loadAllDirectories(pathsProvider.scannedPaths);
     }
     if (mounted) {
       _staggerController.forward();
@@ -117,7 +117,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final result = await FilePicker.platform.getDirectoryPath();
     if (result != null && mounted) {
       final appState = context.read<AppState>();
-      await appState.persistAfterPick(result);
+      final pathsProvider = context.read<ScannedPathsProvider>();
+      await pathsProvider.persistAfterPick(result);
       await appState.loadDirectory(result);
       _staggerController.reset();
       _staggerController.forward();
@@ -140,9 +141,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _deleteFile(PdfFile file) async {
-    final appState = context.read<AppState>();
+    final fileOps = context.read<FileOperationsProvider>();
     final tagProvider = context.read<TagProvider>();
-    final success = await appState.deleteFile(file);
+    final success = await fileOps.deleteFile(file);
     if (success) {
       // Clean up tag mapping for the deleted file.
       await tagProvider.forgetFile(file.path);
@@ -159,7 +160,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _shareFile(PdfFile file) async {
-    await context.read<AppState>().shareFile(file.path);
+    await context.read<FileOperationsProvider>().shareFile(file.path);
   }
 
   Future<void> _encryptFile(PdfFile file) async {
@@ -168,8 +169,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       final set = await showPassphraseDialog(context);
       if (!set || !mounted) return;
     }
-    final appState = context.read<AppState>();
-    final result = await appState.encryptFile(file);
+    final fileOps = context.read<FileOperationsProvider>();
+    final result = await fileOps.encryptFile(file);
     if (mounted && result != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -215,7 +216,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                   ),
                 ),
-                onChanged: (q) => appState.setSearchQuery(q),
+                onChanged: (q) => context.read<SortSearchProvider>().setSearchQuery(q),
               )
             : Row(
                 children: [
@@ -245,7 +246,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 _showSearch = !_showSearch;
                 if (!_showSearch) {
                   _searchController.clear();
-                  appState.setSearchQuery('');
+                  context.read<SortSearchProvider>().setSearchQuery('');
                 }
               });
             },
@@ -254,19 +255,20 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             icon: const Icon(Icons.sort_rounded, size: 20),
             tooltip: 'Sort',
             onSelected: (sortBy) {
-              if (appState.sortBy == sortBy) {
-                appState.sortOrder = appState.sortOrder == SortOrder.asc
+              final sortSearch = context.read<SortSearchProvider>();
+              if (sortSearch.sortBy == sortBy) {
+                sortSearch.sortOrder = sortSearch.sortOrder == SortOrder.asc
                     ? SortOrder.desc
                     : SortOrder.asc;
               } else {
-                appState.sortBy = sortBy;
-                appState.sortOrder = SortOrder.desc;
+                sortSearch.sortBy = sortBy;
+                sortSearch.sortOrder = SortOrder.desc;
               }
             },
             itemBuilder: (_) => [
-              _sortItem(SortBy.name, Icons.sort_by_alpha_rounded, 'Name', appState),
-              _sortItem(SortBy.modified, Icons.access_time_rounded, 'Date', appState),
-              _sortItem(SortBy.size, Icons.data_usage_rounded, 'Size', appState),
+              _sortItem(SortBy.name, Icons.sort_by_alpha_rounded, 'Name', context.read<SortSearchProvider>()),
+              _sortItem(SortBy.modified, Icons.access_time_rounded, 'Date', context.read<SortSearchProvider>()),
+              _sortItem(SortBy.size, Icons.data_usage_rounded, 'Size', context.read<SortSearchProvider>()),
             ],
           ),
           IconButton(
@@ -292,7 +294,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           ),
         ],
       ),
-      body: _buildBody(appState, tagProvider, colorScheme),
+      body: _buildBody(appState, context.read<SortSearchProvider>(), tagProvider, colorScheme),
       floatingActionButton: FloatingActionButton(
         onPressed: _pickDirectory,
         tooltip: 'Open folder',
@@ -303,6 +305,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Widget _buildBody(
     AppState appState,
+    SortSearchProvider sortSearch,
     TagProvider tagProvider,
     ColorScheme colorScheme,
   ) {
@@ -502,9 +505,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     SortBy value,
     IconData icon,
     String label,
-    AppState appState,
+    SortSearchProvider sortSearch,
   ) {
-    final isActive = appState.sortBy == value;
+    final isActive = sortSearch.sortBy == value;
     return PopupMenuItem(
       value: value,
       child: Row(
@@ -515,7 +518,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           if (isActive) ...[
             const Spacer(),
             Icon(
-              appState.sortOrder == SortOrder.asc
+              sortSearch.sortOrder == SortOrder.asc
                   ? Icons.arrow_upward_rounded
                   : Icons.arrow_downward_rounded,
               size: 16,
