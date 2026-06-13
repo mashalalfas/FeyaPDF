@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+      - run: flutter pub get
+      - run: dart analyze
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+      - run: flutter pub get
+      # Run all fast tests (exclude the 1MB encryption round-trip)
+      # PBKDF2 600k iterations makes it ~50s
+      # Run all tests except the slow 1MB encryption round-trip
+      - run: flutter test test/widget_test.dart test/tag_service_test.dart test/settings_service_test.dart test/tag_provider_test.dart test/app_state_test.dart test/file_service_test.dart
