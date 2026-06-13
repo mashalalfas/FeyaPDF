@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:pdfx/pdfx.dart';
+import 'package:pdfrx/pdfrx.dart';
 import '../models/pdf_file.dart';
 import '../providers/app_state.dart';
 import '../providers/encryption_provider.dart';
@@ -18,11 +18,15 @@ class ViewerScreen extends StatefulWidget {
 }
 
 class _ViewerScreenState extends State<ViewerScreen> {
-  PdfControllerPinch? _pdfController;
+  PdfViewerController? _pdfController;
   bool _isLoading = true;
   String? _error;
   int _currentPage = 1;
   int _totalPages = 0;
+  PdfDocumentRef? _documentRef;
+
+  // Cached link annotations per page (loaded async when document is ready)
+  final Map<int, List<PdfLink>> _pageLinks = {};
 
   // SVG-specific state
   bool _isSvgFile = false;
@@ -65,7 +69,6 @@ class _ViewerScreenState extends State<ViewerScreen> {
     // --- PDF branch ---
     final appState = context.read<AppState>();
     final encryption = context.read<EncryptionProvider>();
-    final settings = context.read<SettingsProvider>();
 
     // If encrypted and no passphrase, prompt
     if (widget.file.isEncrypted && !encryption.hasPassphrase) {
@@ -75,6 +78,12 @@ class _ViewerScreenState extends State<ViewerScreen> {
         return;
       }
     }
+
+    // Resolve last-page preference BEFORE building the document ref
+    // (avoids using BuildContext across any further async gap)
+    final settings = context.read<SettingsProvider>();
+    final lastPage = settings.getLastReadPage(widget.file.path);
+    final initialPage = (lastPage != null && lastPage > 0) ? lastPage : 1;
 
     try {
       // Check file exists
@@ -88,8 +97,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
         return;
       }
 
-      PdfDocument document;
-
+      // Build the PdfDocumentRef for this source
       if (widget.file.isEncrypted) {
         // Encrypted: must decrypt first, load into memory
         final bytes = await appState.getPdfBytes(widget.file);
@@ -109,49 +117,33 @@ class _ViewerScreenState extends State<ViewerScreen> {
             SnackBar(
               content: const Text('Large encrypted PDF — may take a moment to load'),
               behavior: SnackBarBehavior.floating,
-              duration: Duration(seconds: 3),
+              duration: const Duration(seconds: 3),
             ),
           );
         }
 
-        document = await PdfDocument.openData(bytes);
+        _documentRef = PdfDocumentRefData(
+          bytes,
+          sourceName: widget.file.path,
+          useProgressiveLoading: false,
+        );
       } else {
         // Unencrypted: open via file path (memory-mapped / lazy page loading)
-        document = await PdfDocument.openFile(widget.file.path);
+        _documentRef = PdfDocumentRefFile(
+          widget.file.path,
+          useProgressiveLoading: true,
+        );
       }
 
-      final totalPages = document.pagesCount;
+      // Create controller — pageCount/pageNumber are available after viewer is ready
+      _pdfController = PdfViewerController();
 
-      if (totalPages == 0) {
-        await document.close();
-        if (mounted) {
-          setState(() {
-            _error = 'PDF has no pages';
-            _isLoading = false;
-          });
-        }
-        return;
+      if (mounted) {
+        setState(() {
+          _currentPage = initialPage;
+          _isLoading = false;
+        });
       }
-
-      // Restore last read position
-      final lastPage = settings.getLastReadPage(widget.file.path);
-      final initialPage = (lastPage != null && lastPage > 0 && lastPage <= totalPages)
-          ? lastPage
-          : 1;
-
-      _pdfController = PdfControllerPinch(
-        document: Future.value(document),
-        initialPage: initialPage,
-      );
-
-      setState(() {
-        _totalPages = totalPages;
-        _currentPage = initialPage;
-        _isLoading = false;
-      });
-
-      // Listen for page changes
-      _pdfController!.addListener(_onPageChanged);
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -162,20 +154,58 @@ class _ViewerScreenState extends State<ViewerScreen> {
     }
   }
 
-  void _onPageChanged() {
-    if (_pdfController == null) return;
-    final page = _pdfController!.page;
-    if (page != _currentPage && mounted) {
-      setState(() => _currentPage = page);
-      // Save last read position
-      context.read<SettingsProvider>().setLastReadPage(widget.file.path, page);
+  /// Load link annotations for a given page and cache them.
+  Future<void> _loadPageLinks(PdfDocument document, int pageNumber) async {
+    if (_pageLinks.containsKey(pageNumber)) return;
+    try {
+      final page = document.pages[pageNumber - 1];
+      final links = await page.loadLinks(compact: true);
+      if (mounted) {
+        setState(() {
+          _pageLinks[pageNumber] = links;
+        });
+      }
+    } catch (_) {
+      // Silently ignore — links are optional; render nothing on failure
     }
+  }
+
+  /// Called when the PdfViewer finishes loading the document.
+  void _onViewerReady(PdfDocument? document, PdfViewerController controller) {
+    if (document == null) return;
+    if (mounted) {
+      setState(() {
+        _totalPages = document.pages.length;
+        _currentPage = controller.pageNumber ?? _currentPage;
+      });
+    }
+    // Pre-load links for the currently visible page
+    _loadPageLinks(document, controller.pageNumber ?? _currentPage);
+  }
+
+  /// Called when the viewer notifies a page change.
+  void _onPageChanged(int? pageNumber) {
+    if (pageNumber == null || pageNumber == _currentPage) return;
+    final document = _documentRef?.resolveListenable().document;
+    if (document != null && pageNumber > 0 && pageNumber <= document.pages.length) {
+      _loadPageLinks(document, pageNumber);
+    }
+    if (mounted) {
+      setState(() => _currentPage = pageNumber);
+      context.read<SettingsProvider>().setLastReadPage(widget.file.path, pageNumber);
+    }
+  }
+
+  /// Called when the document reference notifies a document change (load / reload).
+  void _onDocumentChanged(PdfDocument? document) {
+    if (document == null || !mounted) return;
+    setState(() => _totalPages = document.pages.length);
   }
 
   @override
   void dispose() {
-    _pdfController?.removeListener(_onPageChanged);
-    _pdfController?.dispose();
+    // PdfViewerController is a ValueListenable; it is cleaned up by the PdfViewer widget.
+    // PdfDocumentRef auto-disposes the underlying document when autoDispose=true (default).
     super.dispose();
   }
 
@@ -253,7 +283,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
           ],
         ),
         actions: [
-          // FEATURE 1: Save icon is always visible (no longer gated by _isExternalFile)
+          // FEATURE 1: Save icon is always visible
           IconButton(
             icon: const Icon(Icons.save_alt_rounded, size: 20),
             tooltip: 'Save to folder',
@@ -328,69 +358,60 @@ class _ViewerScreenState extends State<ViewerScreen> {
     }
 
     // --- PDF viewer ---
-    if (_pdfController == null) {
+    if (_documentRef == null || _pdfController == null) {
       return const Center(child: Text('No PDF loaded'));
     }
 
-    return PdfViewPinch(
-      controller: _pdfController!,
-      onDocumentLoaded: (document) {
-        // FEATURE 3 — PDF annotations / comments
-        // pdfx 2.x does not expose annotation data through its public API.
-        // The PdfViewPinch widget renders pages as textures/images and has no
-        // built-in annotation overlay support.
-        //
-        // To support PDF annotations in the future, one of these approaches
-        // would be needed:
-        //
-        //   1. Use a lower-level PDF renderer (e.g., pdfrx or pdfium_flutter)
-        //      that provides access to annotation objects (text highlights,
-        //      sticky notes, free-text comments, etc.) and render them as
-        //      custom overlay widgets on top of each page.
-        //
-        //   2. Parse annotations from the PDF metadata separately using a
-        //      Dart-native PDF parser and build a widget overlay that
-        //      positions annotation markers relative to page coordinates.
-        //
-        //   3. Embed a WebView with a JavaScript PDF viewer (PDF.js) that
-        //      already supports annotation rendering.
-        //
-        // For now we just track the page count; annotation rendering is
-        // deferred until a future pdfx version or a PDF library migration.
-        if (mounted) {
-          setState(() => _totalPages = document.pagesCount);
-        }
-      },
-      onPageChanged: (page) {
-        if (mounted && page != _currentPage) {
-          setState(() => _currentPage = page);
-          context.read<SettingsProvider>().setLastReadPage(widget.file.path, page);
-        }
-      },
-      builders: PdfViewPinchBuilders<DefaultBuilderOptions>(
-        options: const DefaultBuilderOptions(
-          loaderSwitchDuration: Duration(milliseconds: 200),
-        ),
-        documentLoaderBuilder: (context) => Center(
-          child: CircularProgressIndicator(
-            color: Theme.of(context).colorScheme.primary,
-          ),
-        ),
-        pageLoaderBuilder: (context) => Center(
-          child: CircularProgressIndicator(
-            color: Theme.of(context).colorScheme.primary,
-          ),
-        ),
-        errorBuilder: (context, error) => Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.broken_image_rounded, size: 48, color: Theme.of(context).colorScheme.error),
-              const SizedBox(height: 12),
-              Text('Failed to render page', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-            ],
-          ),
-        ),
+    return PdfViewer(
+      _documentRef!,
+      controller: _pdfController,
+      initialPageNumber: _currentPage,
+      params: PdfViewerParams(
+        // FEATURE 3 — Annotations / links overlay
+        // pdfrx renders annotations natively (forms + appearances) by default
+        // via PdfAnnotationRenderingMode.annotationAndForms.
+        // We additionally render link annotations as overlay widgets
+        // so that interactive regions (URL links, internal destinations)
+        // are visually indicated to the user.
+        pageOverlaysBuilder: (context, pageRect, page) {
+          final pageLinks = _pageLinks[page.pageNumber];
+          if (pageLinks == null || pageLinks.isEmpty) return [];
+          return pageLinks.map((link) {
+            // Render each link annotation as a translucent highlight badge
+            // at the first rect in the link's rect list.
+            final rect = link.rects.isNotEmpty ? link.rects.first : null;
+            if (rect == null) return const SizedBox.shrink();
+            return Positioned(
+              left: pageRect.left + rect.left,
+              top: pageRect.top + rect.top,
+              child: Container(
+                width: rect.width,
+                height: rect.height,
+                decoration: BoxDecoration(
+                  color: Colors.blue.withValues(alpha: 0.12),
+                  border: Border.all(
+                    color: Colors.blue.withValues(alpha: 0.5),
+                    width: 1,
+                  ),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+                child: link.url != null
+                    ? const Align(
+                        alignment: Alignment.topRight,
+                        child: Icon(
+                          Icons.link_rounded,
+                          size: 12,
+                          color: Colors.blue,
+                        ),
+                      )
+                    : null,
+              ),
+            );
+          }).toList();
+        },
+        onDocumentChanged: _onDocumentChanged,
+        onViewerReady: _onViewerReady,
+        onPageChanged: _onPageChanged,
       ),
     );
   }
@@ -457,6 +478,11 @@ class _ViewerScreenState extends State<ViewerScreen> {
   }
 
   Widget _buildPageIndicator(ColorScheme colorScheme) {
+    final controller = _pdfController;
+    if (controller == null) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
@@ -471,11 +497,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
           IconButton(
             icon: const Icon(Icons.chevron_left_rounded),
             onPressed: _currentPage > 1
-                ? () => _pdfController?.animateToPage(
-                    pageNumber: _currentPage - 1,
-                    duration: const Duration(milliseconds: 200),
-                    curve: Curves.easeInOut,
-                  )
+                ? () => controller.goToPage(pageNumber: _currentPage - 1)
                 : null,
             iconSize: 24,
             visualDensity: VisualDensity.compact,
@@ -500,11 +522,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
           IconButton(
             icon: const Icon(Icons.chevron_right_rounded),
             onPressed: _currentPage < _totalPages
-                ? () => _pdfController?.animateToPage(
-                    pageNumber: _currentPage + 1,
-                    duration: const Duration(milliseconds: 200),
-                    curve: Curves.easeInOut,
-                  )
+                ? () => controller.goToPage(pageNumber: _currentPage + 1)
                 : null,
             iconSize: 24,
             visualDensity: VisualDensity.compact,
