@@ -5,7 +5,7 @@
     <!-- For Android 11+ (API 30+) — broad file access for PDF scanning -->
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
     <application
-        android:label="Melody PDF"
+        android:label="Feya PDF"
         android:requestLegacyExternalStorage="true"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">

@@ -129,7 +129,7 @@ class _SecureFolderCardState extends State<SecureFolderCard> {
   Future<void> _exportSecureFile(PdfFile file) async {
     try {
       final docsDir = await getApplicationDocumentsDirectory();
-      final exportDir = Directory('${docsDir.path}/MelodyPDF_Exports');
+      final exportDir = Directory('${docsDir.path}/FeyaPDF_Exports');
       if (!await exportDir.exists()) {
         await exportDir.create(recursive: true);
       }
@@ -144,7 +144,7 @@ class _SecureFolderCardState extends State<SecureFolderCard> {
       if (result != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Exported to MelodyPDF_Exports'),
+            content: Text('Exported to FeyaPDF_Exports'),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),

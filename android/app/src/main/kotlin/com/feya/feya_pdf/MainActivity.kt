@@ -1,4 +1,4 @@
-package com.melody.melody_pdf
+package com.feya.feya_pdf
 
 import android.content.Intent
 import android.net.Uri
@@ -10,7 +10,7 @@ import java.io.File
 import java.io.FileOutputStream
 
 class MainActivity : FlutterActivity() {
-    private val CHANNEL = "com.melody.melody_pdf/intent"
+    private val CHANNEL = "com.feya.feya_pdf/intent"
     private var initialFilePath: String? = null
     private var methodChannel: MethodChannel? = null
 

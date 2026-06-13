@@ -218,7 +218,7 @@ class SecureFolderProvider extends ChangeNotifier {
       // For a sync check, we delegate to the service's async method —
       // the provider callers should use the static method directly if
       // they need a sync check. This method is kept for API consistency.
-      return path.contains('/MelodyPDF_Secure/');
+      return path.contains('/FeyaPDF_Secure/');
     } catch (_) {
       return false;
     }

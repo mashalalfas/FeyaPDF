@@ -7,12 +7,12 @@ import 'encryption_service.dart';
 /// Manages encrypted files in a dedicated secure folder.
 ///
 /// All files are AES-256-GCM encrypted with the user's passphrase.
-/// The secure folder lives at {appDocuments}/MelodyPDF_Secure/.
+/// The secure folder lives at {appDocuments}/FeyaPDF_Secure/.
 class SecureFolderService {
   /// Get the secure directory, creating it if it doesn't exist.
   static Future<Directory> getSecureDir() async {
     final appDir = await getApplicationDocumentsDirectory();
-    final secureDir = Directory('${appDir.path}/MelodyPDF_Secure/');
+    final secureDir = Directory('${appDir.path}/FeyaPDF_Secure/');
     if (!await secureDir.exists()) {
       await secureDir.create(recursive: true);
     }

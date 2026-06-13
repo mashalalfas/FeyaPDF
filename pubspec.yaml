@@ -1,5 +1,5 @@
-name: melody_pdf
-description: "Melody PDF — a clean, fast, ad-free PDF reader with E2E encryption."
+name: feya_pdf
+description: "Feya PDF — a clean, fast, ad-free PDF reader with E2E encryption."
 publish_to: 'none'
 version: 1.0.0+1
 

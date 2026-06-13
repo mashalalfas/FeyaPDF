@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Warm, earthy palette — matches Melody MD exactly
+  // Warm, earthy palette — matches Feya exactly
   static const _teal = Color(0xFF00897B);
   static const _amber = Color(0xFFD4A04A);
   static const _amberDark = Color(0xFFE0B054);

@@ -5,7 +5,7 @@
 
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:melody_pdf/services/file_service.dart';
+import 'package:feya_pdf/services/file_service.dart';
 
 /// Shared temp root for filesystem tests; cleaned up in tearDownAll.
 late Directory _tempRoot;
@@ -25,7 +25,7 @@ File _writeFile(Directory parent, String name, List<int> content) {
 
 void main() {
   setUpAll(() {
-    _tempRoot = Directory.systemTemp.createTempSync('melody_pdf_fs_test_');
+    _tempRoot = Directory.systemTemp.createTempSync('feya_pdf_fs_test_');
   });
 
   tearDownAll(() {

@@ -12,7 +12,7 @@ import 'package:pointycastle/export.dart';
 ///
 /// Key derivation: PBKDF2-SHA256, 600,000 iterations, 32-byte key.
 ///
-/// Same format as Melody MD's encryption, just applied to PDF bytes.
+/// Same format as Feya's encryption, just applied to PDF bytes.
 class EncryptionService {
   static const _magic = [0x4D, 0x45, 0x4C, 0x59]; // "MELY"
   static const _version = 1;

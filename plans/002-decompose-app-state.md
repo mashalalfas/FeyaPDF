@@ -46,7 +46,7 @@ Callers (files that import app_state.dart):
 Conventions to match:
 - Provider pattern via `ChangeNotifier` + `notifyListeners()`
 - Files organized as `lib/providers/<name>_provider.dart`
-- Import style: `'package:melody_pdf/providers/<name>.dart'`
+- Import style: `'package:feya_pdf/providers/<name>.dart'`
 
 ## Commands you will need
 

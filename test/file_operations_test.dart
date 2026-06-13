@@ -9,9 +9,9 @@
 
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:melody_pdf/models/pdf_file.dart';
-import 'package:melody_pdf/providers/file_operations_provider.dart';
-import 'package:melody_pdf/providers/encryption_provider.dart';
+import 'package:feya_pdf/models/pdf_file.dart';
+import 'package:feya_pdf/providers/file_operations_provider.dart';
+import 'package:feya_pdf/providers/encryption_provider.dart';
 
 /// Temp root for all filesystem operations in this file.
 late Directory _tempRoot;
@@ -37,7 +37,7 @@ PdfFile _pdfFileAt(Directory dir, String name) => PdfFile(
 
 void main() {
   setUpAll(() {
-    _tempRoot = Directory.systemTemp.createTempSync('melody_pdf_fops_');
+    _tempRoot = Directory.systemTemp.createTempSync('feya_pdf_fops_');
   });
 
   tearDownAll(() {

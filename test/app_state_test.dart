@@ -2,8 +2,8 @@
 
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:melody_pdf/models/pdf_file.dart';
-import 'package:melody_pdf/providers/app_state.dart';
+import 'package:feya_pdf/models/pdf_file.dart';
+import 'package:feya_pdf/providers/app_state.dart';
 
 /// Global temp root for filesystem tests; cleaned up in tearDownAll.
 late Directory _tempRoot;
@@ -22,7 +22,7 @@ File _writePdf(Directory parent, String name, {int sizeBytes = 100}) {
 
 void main() {
   setUpAll(() {
-    _tempRoot = Directory.systemTemp.createTempSync('melody_pdf_app_state_');
+    _tempRoot = Directory.systemTemp.createTempSync('feya_pdf_app_state_');
   });
 
   tearDownAll(() {

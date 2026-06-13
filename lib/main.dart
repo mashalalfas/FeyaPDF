@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'providers/app_state.dart';
@@ -21,6 +23,9 @@ void main() async {
   final prefs = await SharedPreferences.getInstance();
   final settingsService = SettingsService(prefs);
   await settingsService.migrateLegacyKeys();
+
+  // Storage migration: rename MelodyPDF → FeyaPDF directories
+  await _migrateDirectories();
   final tagService = TagService(prefs);
   IntentHandler.init();
 
@@ -39,19 +44,19 @@ void main() async {
         ChangeNotifierProvider(create: (_) => FileOperationsProvider()),
         ChangeNotifierProvider(create: (_) => AppState()),
       ],
-      child: const MelodyPdfApp(),
+      child: const FeyaPdfApp(),
     ),
   );
 }
 
-class MelodyPdfApp extends StatefulWidget {
-  const MelodyPdfApp({super.key});
+class FeyaPdfApp extends StatefulWidget {
+  const FeyaPdfApp({super.key});
 
   @override
-  State<MelodyPdfApp> createState() => _MelodyPdfAppState();
+  State<FeyaPdfApp> createState() => _FeyaPdfAppState();
 }
 
-class _MelodyPdfAppState extends State<MelodyPdfApp> {
+class _FeyaPdfAppState extends State<FeyaPdfApp> {
   bool _wired = false;
 
   @override
@@ -84,12 +89,42 @@ class _MelodyPdfAppState extends State<MelodyPdfApp> {
     final settings = context.watch<SettingsProvider>();
 
     return MaterialApp(
-      title: 'Melody PDF',
+      title: 'Feya PDF',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: settings.themeMode,
       home: const HomeScreen(),
     );
+  }
+}
+
+/// Rename old MelodyPDF directories to FeyaPDF so existing users
+/// don't lose their saved files after the rebrand.
+Future<void> _migrateDirectories() async {
+  final appDir = await getApplicationDocumentsDirectory();
+
+  final oldSaveDir = Directory('${appDir.path}/MelodyPDF');
+  final newSaveDir = Directory('${appDir.path}/FeyaPDF');
+  if (await oldSaveDir.exists() && !await newSaveDir.exists()) {
+    try {
+      await oldSaveDir.rename(newSaveDir.path);
+    } catch (_) {}
+  }
+
+  final oldSecureDir = Directory('${appDir.path}/MelodyPDF_Secure');
+  final newSecureDir = Directory('${appDir.path}/FeyaPDF_Secure');
+  if (await oldSecureDir.exists() && !await newSecureDir.exists()) {
+    try {
+      await oldSecureDir.rename(newSecureDir.path);
+    } catch (_) {}
+  }
+
+  final oldExportDir = Directory('${appDir.path}/MelodyPDF_Exports');
+  final newExportDir = Directory('${appDir.path}/FeyaPDF_Exports');
+  if (await oldExportDir.exists() && !await newExportDir.exists()) {
+    try {
+      await oldExportDir.rename(newExportDir.path);
+    } catch (_) {}
   }
 }

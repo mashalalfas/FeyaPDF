@@ -70,7 +70,7 @@ Test `EncryptionService.encryptBytes()` and `decryptBytes()`:
 Pattern:
 ```dart
 import 'package:flutter_test/flutter_test.dart';
-import 'package:melody_pdf/services/encryption_service.dart';
+import 'package:feya_pdf/services/encryption_service.dart';
 
 void main() {
   group('EncryptionService', () {

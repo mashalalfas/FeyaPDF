@@ -3,7 +3,7 @@
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:melody_pdf/services/encryption_service.dart';
+import 'package:feya_pdf/services/encryption_service.dart';
 
 
 void main() {
@@ -14,7 +14,7 @@ void main() {
     // Act: encrypt + decrypt round-trip
     // Assert: decrypted bytes equal original
     test('encrypt then decrypt returns same bytes', () {
-      final original = Uint8List.fromList('Hello Melody PDF!'.codeUnits);
+      final original = Uint8List.fromList('Hello Feya PDF!'.codeUnits);
       final encrypted = EncryptionService.encryptBytes(original, passphrase);
       final decrypted = EncryptionService.decryptBytes(encrypted, passphrase);
       expect(decrypted, equals(original));

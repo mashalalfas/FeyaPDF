@@ -23,13 +23,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:melody_pdf/models/pdf_file.dart';
-import 'package:melody_pdf/providers/app_state.dart';
-import 'package:melody_pdf/providers/encryption_provider.dart';
-import 'package:melody_pdf/providers/file_operations_provider.dart';
-import 'package:melody_pdf/providers/settings_provider.dart';
-import 'package:melody_pdf/screens/viewer_screen.dart';
-import 'package:melody_pdf/services/settings_service.dart';
+import 'package:feya_pdf/models/pdf_file.dart';
+import 'package:feya_pdf/providers/app_state.dart';
+import 'package:feya_pdf/providers/encryption_provider.dart';
+import 'package:feya_pdf/providers/file_operations_provider.dart';
+import 'package:feya_pdf/providers/settings_provider.dart';
+import 'package:feya_pdf/screens/viewer_screen.dart';
+import 'package:feya_pdf/services/settings_service.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -112,7 +112,7 @@ void main() {
   setUpAll(() {
     // Ensure SharedPreferences is mocked once for the entire suite.
     SharedPreferences.setMockInitialValues({});
-    _tempRoot = Directory.systemTemp.createTempSync('melody_pdf_viewer_');
+    _tempRoot = Directory.systemTemp.createTempSync('feya_pdf_viewer_');
   });
 
   tearDownAll(() {

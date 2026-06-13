@@ -234,7 +234,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  const Text('Melody PDF'),
+                  const Text('Feya PDF'),
                 ],
               ),
         actions: [

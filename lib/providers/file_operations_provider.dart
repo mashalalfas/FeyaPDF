@@ -107,7 +107,7 @@ class FileOperationsProvider extends ChangeNotifier {
     }
   }
 
-  /// Save a file to a target directory, or the app's local documents MelodyPDF
+  /// Save a file to a target directory, or the app's local documents FeyaPDF
   /// folder if [targetDir] is null.
   /// Returns a [SaveResult] indicating success, alreadyExists, or failure.
   Future<(SaveResult, String?)> saveToLocal(String sourcePath, {String? targetDir}) async {
@@ -117,7 +117,7 @@ class FileOperationsProvider extends ChangeNotifier {
         destDirPath = targetDir;
       } else {
         final docsDir = await getApplicationDocumentsDirectory();
-        destDirPath = '${docsDir.path}/MelodyPDF';
+        destDirPath = '${docsDir.path}/FeyaPDF';
       }
 
       final localDir = Directory(destDirPath);

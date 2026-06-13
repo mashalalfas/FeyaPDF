@@ -154,7 +154,7 @@ class SettingsScreen extends StatelessWidget {
             trailing: const Icon(Icons.chevron_right_rounded),
             onTap: () => showLicensePage(
               context: context,
-              applicationName: 'Melody PDF',
+              applicationName: 'Feya PDF',
               applicationVersion: '1.0.0+1',
             ),
           ),

@@ -1,4 +1,4 @@
-# Melody PDF
+# Feya PDF
 
 A clean, fast, ad-free PDF reader for Android with E2E encryption and annotation support.
 
