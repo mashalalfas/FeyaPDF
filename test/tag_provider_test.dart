@@ -1,3 +1,5 @@
+// Size: small — provider tests backed by mock SharedPreferences (no real I/O, milliseconds)
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:melody_pdf/models/tag.dart';
 import 'package:melody_pdf/providers/tag_provider.dart';
@@ -13,13 +15,19 @@ Future<TagProvider> _buildProvider(Map<String, Object> initialValues) async {
 
 void main() {
   group('TagProvider', () {
+    // Arrange: build provider with empty prefs
+    // Act: read tags and hasTags
+    // Assert: empty list, hasTags false
     test('starts with no tags when prefs are empty', () async {
       final provider = await _buildProvider({});
       expect(provider.tags, isEmpty);
       expect(provider.hasTags, isFalse);
     });
 
-    test('createTag adds tag and notifies', () async {
+    // Arrange: build provider with empty prefs
+    // Act: createTag('Work', color:0xFFE57373)
+    // Assert: tags list has length 1, name and color match
+    test('createTag adds tag and notifies listeners', () async {
       final provider = await _buildProvider({});
       await provider.createTag(name: 'Work', color: 0xFFE57373);
       expect(provider.tags, hasLength(1));
@@ -27,7 +35,10 @@ void main() {
       expect(provider.tags.first.color, equals(0xFFE57373));
     });
 
-    test('createTag with empty name throws ArgumentError', () async {
+    // Arrange: build provider with empty prefs
+    // Act: createTag with whitespace-only name
+    // Assert: throws ArgumentError
+    test('createTag with empty or whitespace name throws ArgumentError', () async {
       final provider = await _buildProvider({});
       expect(
         () => provider.createTag(name: '   ', color: 0),
@@ -35,14 +46,20 @@ void main() {
       );
     });
 
-    test('createTag generates unique ids', () async {
+    // Arrange: build provider with empty prefs
+    // Act: create two tags
+    // Assert: both ids are unique
+    test('createTag generates unique ids for each tag', () async {
       final provider = await _buildProvider({});
       final t1 = await provider.createTag(name: 'A', color: 0);
       final t2 = await provider.createTag(name: 'B', color: 0);
       expect(t1.id, isNot(equals(t2.id)));
     });
 
-    test('updateTag modifies an existing tag', () async {
+    // Arrange: build provider, create tag 'Old'
+    // Act: updateTag with new name and color
+    // Assert: first tag has updated name and color
+    test('updateTag modifies name and color of an existing tag', () async {
       final provider = await _buildProvider({});
       final tag = await provider.createTag(name: 'Old', color: 0xFF0000);
       await provider.updateTag(tag.copyWith(name: 'New', color: 0x00FF00));
@@ -50,7 +67,10 @@ void main() {
       expect(provider.tags.first.color, equals(0x00FF00));
     });
 
-    test('updateTag does nothing for unknown id', () async {
+    // Arrange: build provider, create tag 'Only'
+    // Act: updateTag with a tag that has an unknown id
+    // Assert: tags list unchanged (still 1 item, still named 'Only')
+    test('updateTag does nothing when tag id is not found', () async {
       final provider = await _buildProvider({});
       await provider.createTag(name: 'Only', color: 0);
       // Create a fake tag with an unknown id
@@ -59,7 +79,10 @@ void main() {
       expect(provider.tags.first.name, equals('Only'));
     });
 
-    test('deleteTag removes tag', () async {
+    // Arrange: build provider, create tag 'ToDelete'
+    // Act: deleteTag(tag.id)
+    // Assert: tags list is empty
+    test('deleteTag removes the tag from the list', () async {
       final provider = await _buildProvider({});
       final tag = await provider.createTag(name: 'ToDelete', color: 0);
       expect(provider.tags, hasLength(1));
@@ -68,7 +91,10 @@ void main() {
       expect(provider.tags, isEmpty);
     });
 
-    test('deleteTag clears active filter if it matches deleted tag', () async {
+    // Arrange: build provider, create tag, set it as active filter
+    // Act: deleteTag for the filtered tag
+    // Assert: activeFilterTagId is null (filter cleared)
+    test('deleteTag clears active filter when deleted tag was the active filter', () async {
       final provider = await _buildProvider({});
       final tag = await provider.createTag(name: 'FilterMe', color: 0);
       provider.setActiveFilter(tag.id);
@@ -78,7 +104,10 @@ void main() {
       expect(provider.activeFilterTagId, isNull);
     });
 
-    test('deleteTag is idempotent (no-op for unknown id)', () async {
+    // Arrange: build provider, create one tag
+    // Act: deleteTag with a non-existent id
+    // Assert: no throw, tags list unchanged
+    test('deleteTag is idempotent and does not throw for unknown id', () async {
       final provider = await _buildProvider({});
       await provider.createTag(name: 'Only', color: 0);
       // Should not throw
@@ -86,7 +115,10 @@ void main() {
       expect(provider.tags, hasLength(1));
     });
 
-    test('setActiveFilter and clearFilter work', () async {
+    // Arrange: build provider, create tag
+    // Act: setActiveFilter(tag.id) then clearFilter()
+    // Assert: activeFilterTagId set then null
+    test('setActiveFilter sets filter and clearFilter resets it', () async {
       final provider = await _buildProvider({});
       final tag = await provider.createTag(name: 'F', color: 0);
 
@@ -98,7 +130,10 @@ void main() {
       expect(provider.activeFilterTagId, isNull);
     });
 
-    test('setActiveFilter is a no-op when same id is set again', () async {
+    // Arrange: build provider, create tag, set active filter
+    // Act: setActiveFilter again with the same id
+    // Assert: no throw, activeFilterTagId still equals tag.id
+    test('setActiveFilter with same id does not throw', () async {
       final provider = await _buildProvider({});
       final tag = await provider.createTag(name: 'A', color: 0);
       provider.setActiveFilter(tag.id);
@@ -107,7 +142,10 @@ void main() {
       expect(provider.activeFilterTagId, equals(tag.id));
     });
 
-    test('tags getter returns unmodifiable list', () async {
+    // Arrange: build provider, create one tag
+    // Act: read tags getter, attempt to mutate returned list
+    // Assert: throws UnsupportedError (list is unmodifiable)
+    test('tags getter returns an unmodifiable list', () async {
       final provider = await _buildProvider({});
       await provider.createTag(name: 'A', color: 0);
       final list = provider.tags;
@@ -116,19 +154,28 @@ void main() {
 
     // --- File ↔ tag mapping ---
 
-    test('getTagsForFile returns empty list when no mapping', () async {
+    // Arrange: build provider, no file-tag mappings set
+    // Act: getTagsForFile('/any/file.pdf')
+    // Assert: returns empty list
+    test('getTagsForFile returns empty list when file has no mapping', () async {
       final provider = await _buildProvider({});
       expect(provider.getTagsForFile('/any/file.pdf'), isEmpty);
     });
 
-    test('setFileTags creates and retrieves mapping', () async {
+    // Arrange: build provider, create a tag
+    // Act: setFileTags('/doc.pdf', [tag.id]) then getTagsForFile
+    // Assert: returns list containing tag.id
+    test('setFileTags creates mapping and getTagsForFile retrieves it', () async {
       final provider = await _buildProvider({});
       final tag = await provider.createTag(name: 'T', color: 0);
       await provider.setFileTags('/doc.pdf', [tag.id]);
       expect(provider.getTagsForFile('/doc.pdf'), equals([tag.id]));
     });
 
-    test('setFileTags with empty list removes mapping', () async {
+    // Arrange: build provider, create tag, set file-tag mapping
+    // Act: setFileTags('/doc.pdf', []) to clear
+    // Assert: getTagsForFile returns empty list
+    test('setFileTags with empty list removes the mapping', () async {
       final provider = await _buildProvider({});
       final tag = await provider.createTag(name: 'T', color: 0);
       await provider.setFileTags('/doc.pdf', [tag.id]);
@@ -138,14 +185,20 @@ void main() {
       expect(provider.getTagsForFile('/doc.pdf'), isEmpty);
     });
 
-    test('setFileTags deduplicates tag ids', () async {
+    // Arrange: build provider, create tag
+    // Act: setFileTags('/doc.pdf', [tag.id, tag.id]) with duplicate
+    // Assert: mapping has length 1 (deduplicated)
+    test('setFileTags deduplicates duplicate tag ids', () async {
       final provider = await _buildProvider({});
       final tag = await provider.createTag(name: 'T', color: 0);
       await provider.setFileTags('/doc.pdf', [tag.id, tag.id]);
       expect(provider.getTagsForFile('/doc.pdf'), hasLength(1));
     });
 
-    test('toggleFileTag adds and removes a tag', () async {
+    // Arrange: build provider, create tag, confirm fileHasTag is false
+    // Act: toggleFileTag('/doc.pdf', tag.id) twice
+    // Assert: true after first toggle, false after second
+    test('toggleFileTag adds then removes a tag for a file', () async {
       final provider = await _buildProvider({});
       final tag = await provider.createTag(name: 'T', color: 0);
 
@@ -159,6 +212,9 @@ void main() {
       expect(provider.fileHasTag('/doc.pdf', tag.id), isFalse);
     });
 
+    // Arrange: build provider, create tag, set file-tag mapping
+    // Act: getResolvedTagsForFile('/doc.pdf')
+    // Assert: returns list with one Tag whose name matches
     test('getResolvedTagsForFile returns Tag objects for mapped ids', () async {
       final provider = await _buildProvider({});
       final tag = await provider.createTag(name: 'Work', color: 0xFF0000);
@@ -169,6 +225,9 @@ void main() {
       expect(resolved.first.name, equals('Work'));
     });
 
+    // Arrange: build provider, create a real tag, set mapping with real + ghost id
+    // Act: getResolvedTagsForFile('/doc.pdf')
+    // Assert: only the real tag is returned, ghost id is filtered out
     test('getResolvedTagsForFile filters out unknown tag ids', () async {
       final provider = await _buildProvider({});
       final tag = await provider.createTag(name: 'Real', color: 0);
@@ -179,7 +238,10 @@ void main() {
       expect(resolved.first.id, equals(tag.id));
     });
 
-    test('forgetFile removes all associations for a file path', () async {
+    // Arrange: build provider, create two tags, associate both with '/doc.pdf'
+    // Act: forgetFile('/doc.pdf')
+    // Assert: getTagsForFile returns empty list
+    test('forgetFile removes all tag associations for a file path', () async {
       final provider = await _buildProvider({});
       final t1 = await provider.createTag(name: 'A', color: 0);
       final t2 = await provider.createTag(name: 'B', color: 0);
@@ -190,14 +252,20 @@ void main() {
       expect(provider.getTagsForFile('/doc.pdf'), isEmpty);
     });
 
-    test('forgetFile on unknown path does nothing', () async {
+    // Arrange: build provider with empty prefs
+    // Act: forgetFile on a path that was never associated
+    // Assert: no throw, tags list still empty
+    test('forgetFile does not throw for an unknown file path', () async {
       final provider = await _buildProvider({});
       // Should not throw
       await provider.forgetFile('/never/existed.pdf');
       expect(provider.tags, isEmpty);
     });
 
-    test('countFilesWithTag counts correctly', () async {
+    // Arrange: build provider, create tag, associate it with two files
+    // Act: countFilesWithTag(tag.id)
+    // Assert: returns 2 (third file has no tags)
+    test('countFilesWithTag returns correct count for associated files', () async {
       final provider = await _buildProvider({});
       final tag = await provider.createTag(name: 'Shared', color: 0);
       await provider.setFileTags('/a.pdf', [tag.id]);
@@ -207,18 +275,27 @@ void main() {
       expect(provider.countFilesWithTag(tag.id), equals(2));
     });
 
-    test('tagById returns correct tag', () async {
+    // Arrange: build provider, create a tag
+    // Act: tagById(tag.id)
+    // Assert: returns the tag with matching name
+    test('tagById returns the correct tag for a known id', () async {
       final provider = await _buildProvider({});
       final tag = await provider.createTag(name: 'FindMe', color: 0);
       expect(provider.tagById(tag.id)?.name, equals('FindMe'));
     });
 
-    test('tagById returns null for unknown id', () async {
+    // Arrange: build provider with empty prefs
+    // Act: tagById('nonexistent')
+    // Assert: returns null
+    test('tagById returns null for an unknown id', () async {
       final provider = await _buildProvider({});
       expect(provider.tagById('nonexistent'), isNull);
     });
 
-    test('persists tags across provider recreation', () async {
+    // Arrange: first TagProvider instance, create a tag
+    // Act: re-read tags from the same SharedPreferences via TagService
+    // Assert: tag persists across provider recreation
+    test('tags persist across TagProvider recreation (simulated restart)', () async {
       // First provider instance: create a tag
       SharedPreferences.setMockInitialValues({});
       final prefs1 = await SharedPreferences.getInstance();

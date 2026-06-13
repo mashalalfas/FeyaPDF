@@ -1,3 +1,5 @@
+// Size: small — pure service tests (dart-only, no I/O, milliseconds)
+
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,6 +10,9 @@ void main() {
   group('EncryptionService', () {
     const passphrase = 'test-passphrase-123';
 
+    // Arrange: a known plaintext Uint8List
+    // Act: encrypt + decrypt round-trip
+    // Assert: decrypted bytes equal original
     test('encrypt then decrypt returns same bytes', () {
       final original = Uint8List.fromList('Hello Melody PDF!'.codeUnits);
       final encrypted = EncryptionService.encryptBytes(original, passphrase);
@@ -15,6 +20,9 @@ void main() {
       expect(decrypted, equals(original));
     });
 
+    // Arrange: known plaintext Uint8List encrypted with passphrase
+    // Act: attempt decryption with wrong passphrase
+    // Assert: throws EncryptionException
     test('wrong passphrase throws EncryptionException', () {
       final encrypted = EncryptionService.encryptBytes(
         Uint8List.fromList('secret data'.codeUnits),
@@ -26,6 +34,9 @@ void main() {
       );
     });
 
+    // Arrange: encrypted bytes, then flip bits in the middle of ciphertext
+    // Act: attempt decryption of corrupted blob
+    // Assert: throws EncryptionException
     test('corrupted data throws EncryptionException', () {
       // Build a "valid looking" blob by encrypting then tampering with bytes in the middle
       final encrypted = EncryptionService.encryptBytes(
@@ -40,6 +51,9 @@ void main() {
       );
     });
 
+    // Arrange: encrypt a short payload, truncate to 10 bytes
+    // Act: attempt decryption of truncated blob
+    // Assert: throws EncryptionException
     test('truncated data throws EncryptionException', () {
       final encrypted = EncryptionService.encryptBytes(
         Uint8List.fromList('data'.codeUnits),
@@ -52,6 +66,9 @@ void main() {
       );
     });
 
+    // Arrange: empty Uint8List
+    // Act: encrypt then decrypt round-trip
+    // Assert: decrypted length is 0
     test('empty bytes round-trips correctly', () {
       final original = Uint8List(0);
       final encrypted = EncryptionService.encryptBytes(original, passphrase);
@@ -59,6 +76,9 @@ void main() {
       expect(decrypted.length, equals(0));
     });
 
+    // Arrange: 1 MB of pseudo-random bytes seeded with a fixed Random
+    // Act: encrypt then decrypt round-trip
+    // Assert: decrypted bytes equal original 1 MB payload
     test('large payload (1MB random data) round-trips correctly', () {
       final random = Random(42);
       final original = Uint8List.fromList(
@@ -69,6 +89,9 @@ void main() {
       expect(decrypted, equals(original));
     });
 
+    // Arrange: same plaintext encrypted with two different passphrases
+    // Act: compare ciphertexts
+    // Assert: ciphertexts differ (random salt/IV per call)
     test('different passphrases produce different ciphertexts', () {
       final original = Uint8List.fromList('same plaintext'.codeUnits);
       final enc1 = EncryptionService.encryptBytes(original, 'pass-a');
@@ -77,6 +100,9 @@ void main() {
       expect(enc1, isNot(equals(enc2)));
     });
 
+    // Arrange: encrypt any payload
+    // Act: inspect first 4 bytes of ciphertext
+    // Assert: bytes match ASCII 'MELY' magic header (0x4D 0x45 0x4C 0x59)
     test('encrypted output has magic header MELY', () {
       final encrypted = EncryptionService.encryptBytes(
         Uint8List.fromList('header check'.codeUnits),
@@ -88,6 +114,9 @@ void main() {
       expect(encrypted[3], equals(0x59));
     });
 
+    // Arrange: all 256 possible byte values (not valid UTF-8 as a whole)
+    // Act: encrypt then decrypt round-trip
+    // Assert: decrypted bytes equal original byte sequence
     test('binary data (non-UTF8 bytes) round-trips correctly', () {
       // Bytes that are not valid UTF-8 — proves we're handling raw bytes, not strings
       final original = Uint8List.fromList(List.generate(256, (i) => i));
