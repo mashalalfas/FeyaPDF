@@ -30,22 +30,11 @@ class EncryptionProvider extends ChangeNotifier {
     if (_passphrase == null || _passphrase!.isEmpty) {
       throw const EncryptionException('No passphrase set');
     }
-
     final file = File(pdfPath);
     if (!await file.exists()) {
       throw EncryptionException('File not found: $pdfPath');
     }
-
-    final plaintext = await file.readAsBytes();
-    final encrypted = EncryptionService.encryptBytes(plaintext, _passphrase!);
-
-    final encPath = '$pdfPath.enc';
-    final tmpPath = '$encPath.tmp';
-
-    await File(tmpPath).writeAsBytes(encrypted);
-    await File(tmpPath).rename(encPath);
-
-    return encPath;
+    return await EncryptionService.encryptFile(pdfPath, _passphrase!);
   }
 
   /// Decrypt a .pdf.enc file. Returns the plaintext PDF bytes.
@@ -55,14 +44,11 @@ class EncryptionProvider extends ChangeNotifier {
       throw const EncryptionException(
           'No passphrase set — enter passphrase to open encrypted file');
     }
-
     final file = File(encPath);
     if (!await file.exists()) {
       throw EncryptionException('File not found: $encPath');
     }
-
-    final data = await file.readAsBytes();
-    return EncryptionService.decryptBytes(data, _passphrase!);
+    return EncryptionService.decryptFile(encPath, _passphrase!);
   }
 
   /// Re-encrypt an already-decrypted file (save flow).
