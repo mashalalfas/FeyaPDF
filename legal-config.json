@@ -1,0 +1,26 @@
+{
+  "project": "feya_pdf",
+  "type": "mobile_app",
+  "jurisdiction": "UAE",
+  "eulaSource": "commercial-standard-license",
+  "dataCollection": "none",
+  "hasAccounts": false,
+  "hasBackend": false,
+  "ossAllowlist": [
+    "MIT",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC"
+  ],
+  "ossBlocklist": [
+    "GPL-2.0",
+    "GPL-3.0",
+    "AGPL-3.0",
+    "SSPL"
+  ],
+  "stores": [
+    "apple_app_store",
+    "google_play"
+  ]
+}

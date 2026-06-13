@@ -1,9 +1,9 @@
-# Melody_PDF — SMI Index
+# Feya_PDF — SMI Index
 
 ## Project Info
-- **Name:** Melody PDF
+- **Name:** Feya PDF
 - **Stack:** Flutter/Dart, Android
-- **Location:** ~/Development/Melody_PDF/
+- **Location:** ~/Development/Feya_PDF/
 - **Status:** Active — v1.1
 - **Created:** 2026-06-03
 
@@ -33,7 +33,7 @@
 - Warm beige #FBF8F1 light bg, dark gray #1A1C1E dark bg
 - Material You, Google Fonts Inter
 - Hero transitions, stagger animations
-- Matches MelodyMD design system exactly
+- Matches FeyaMD design system exactly
 
 ## Dependencies
 - flutter, provider, google_fonts, url_launcher, intl
