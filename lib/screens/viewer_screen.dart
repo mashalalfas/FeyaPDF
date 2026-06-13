@@ -67,7 +67,13 @@ class _ViewerScreenState extends State<ViewerScreen> {
     }
 
     // --- PDF branch ---
+    // Read all providers upfront before any async gap
     final encryption = context.read<EncryptionProvider>();
+    final settings = context.read<SettingsProvider>();
+    final fileOps = context.read<FileOperationsProvider>();
+
+    final lastPage = settings.getLastReadPage(widget.file.path);
+    final initialPage = (lastPage != null && lastPage > 0) ? lastPage : 1;
 
     // If encrypted and no passphrase, prompt
     if (widget.file.isEncrypted && !encryption.hasPassphrase) {
@@ -77,12 +83,6 @@ class _ViewerScreenState extends State<ViewerScreen> {
         return;
       }
     }
-
-    // Resolve last-page preference BEFORE building the document ref
-    // (avoids using BuildContext across any further async gap)
-    final settings = context.read<SettingsProvider>();
-    final lastPage = settings.getLastReadPage(widget.file.path);
-    final initialPage = (lastPage != null && lastPage > 0) ? lastPage : 1;
 
     try {
       // Check file exists
@@ -98,8 +98,6 @@ class _ViewerScreenState extends State<ViewerScreen> {
 
       // Build the PdfDocumentRef for this source
       if (widget.file.isEncrypted) {
-        // Encrypted: must decrypt first, load into memory
-        final fileOps = context.read<FileOperationsProvider>();
     final bytes = await fileOps.getPdfBytes(widget.file);
         if (bytes == null || bytes.isEmpty || !mounted) {
           if (mounted) {
