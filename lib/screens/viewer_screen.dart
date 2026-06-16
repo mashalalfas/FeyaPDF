@@ -7,7 +7,19 @@ import '../models/pdf_file.dart';
 import '../providers/encryption_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/file_operations_provider.dart';
+import '../providers/search_provider.dart';
 import '../widgets/passphrase_dialog.dart';
+import '../widgets/search_bar.dart';
+import '../widgets/thumbnail_grid.dart';
+
+/// Color matrix that inverts all RGB channels (255 - value) while preserving alpha.
+/// Used by Dark Reading Mode to create a negative effect on the PDF canvas.
+const ColorFilter _invertColorFilter = ColorFilter.matrix([
+  -1, 0, 0, 0, 255,
+  0, -1, 0, 0, 255,
+  0, 0, -1, 0, 255,
+  0, 0, 0, 1, 0,
+]);
 
 class ViewerScreen extends StatefulWidget {
   final PdfFile file;
@@ -35,6 +47,10 @@ class _ViewerScreenState extends State<ViewerScreen> {
   // Outline / table of contents state
   List<PdfOutlineNode>? _outline;
   bool _outlineLoading = false;
+
+  // Search bar state
+  final _searchProvider = SearchProvider();
+  bool _showSearchBar = false;
 
   // Seek-to-page state (tapping the page counter)
   bool _showPageSeek = false;
@@ -186,6 +202,8 @@ class _ViewerScreenState extends State<ViewerScreen> {
         _currentPage = controller.pageNumber ?? _currentPage;
       });
     }
+    // Attach the search provider to the viewer controller
+    _searchProvider.attach(controller);
     // Pre-load links for the currently visible page
     _loadPageLinks(document, controller.pageNumber ?? _currentPage);
     // Pre-load outline in the background
@@ -231,6 +249,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
 
   @override
   void dispose() {
+    _searchProvider.dispose();
     _pageSeekController.dispose();
     _pageSeekFocus.dispose();
     // PdfViewerController is a ValueListenable; it is cleaned up by the PdfViewer widget.
@@ -457,6 +476,20 @@ class _ViewerScreenState extends State<ViewerScreen> {
     );
   }
 
+  /// FEATURE 4 — Show thumbnail grid as a bottom sheet.
+  void _showThumbnailGrid() {
+    final controller = _pdfController;
+    final documentRef = _documentRef;
+    if (controller == null || documentRef == null) return;
+
+    ThumbnailGrid.show(
+      context,
+      documentRef: documentRef,
+      currentPage: _currentPage,
+      onPageSelected: (page) => controller.goToPage(pageNumber: page),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -494,6 +527,51 @@ class _ViewerScreenState extends State<ViewerScreen> {
               tooltip: 'Table of Contents',
               onPressed: _showOutline,
             ),
+          // FEATURE 4 — Thumbnail grid button (only if setting enabled)
+          if (!_isSvgFile && _totalPages > 0 && settings.showThumbnails)
+            IconButton(
+              icon: Icon(
+                Icons.grid_view_rounded,
+                size: 20,
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+              ),
+              tooltip: 'Thumbnails',
+              onPressed: _showThumbnailGrid,
+            ),
+          // Dark reading mode quick toggle
+          if (!_isSvgFile && _totalPages > 0)
+            IconButton(
+              icon: Icon(
+                settings.darkReadingMode
+                    ? Icons.dark_mode_rounded
+                    : Icons.dark_mode_outlined,
+                size: 20,
+                color: settings.darkReadingMode ? colorScheme.primary : null,
+              ),
+              tooltip: settings.darkReadingMode
+                  ? 'Disable dark reading'
+                  : 'Enable dark reading',
+              onPressed: () =>
+                  settings.setDarkReadingMode(!settings.darkReadingMode),
+            ),
+          // Search in document button
+          if (!_isSvgFile && _totalPages > 0)
+            IconButton(
+              icon: Icon(
+                Icons.search_rounded,
+                size: 20,
+                color: _showSearchBar ? colorScheme.primary : null,
+              ),
+              tooltip: 'Search in document',
+              onPressed: () {
+                setState(() {
+                  if (_showSearchBar) {
+                    _searchProvider.clearSearch();
+                  }
+                  _showSearchBar = !_showSearchBar;
+                });
+              },
+            ),
           // FEATURE 1: Save icon is always visible
           IconButton(
             icon: const Icon(Icons.save_alt_rounded, size: 20),
@@ -507,14 +585,91 @@ class _ViewerScreenState extends State<ViewerScreen> {
           ),
         ],
       ),
-      body: _buildBody(colorScheme, settings),
+      body: Column(
+        children: [
+          AnimatedSize(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
+            child: _showSearchBar
+                ? SearchBarWidget(
+                    matchCount: _searchProvider.matchCount,
+                    currentMatchIndex: _searchProvider.matchCount > 0
+                        ? _searchProvider.currentMatchIndex + 1
+                        : 0,
+                    onSearchChanged: (query) {
+                      _searchProvider.search(query);
+                    },
+                    onNextMatch: () {
+                      _searchProvider.nextMatch();
+                    },
+                    onPreviousMatch: () {
+                      _searchProvider.previousMatch();
+                    },
+                    onClose: () {
+                      _searchProvider.clearSearch();
+                      setState(() => _showSearchBar = false);
+                    },
+                  )
+                : const SizedBox.shrink(),
+          ),
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              switchInCurve: Curves.easeInOut,
+              switchOutCurve: Curves.easeInOut,
+              child: _buildBody(
+                colorScheme,
+                settings,
+                key: ValueKey(settings.darkReadingMode),
+              ),
+            ),
+          ),
+        ],
+      ),
       bottomNavigationBar: !_isSvgFile && _totalPages > 0
           ? _buildPageIndicator(colorScheme)
           : null,
     );
   }
 
-  Widget _buildBody(ColorScheme colorScheme, SettingsProvider settings) {
+  /// Build the text selection context menu with a Copy button.
+  ///
+  /// Appears as a floating toolbar above the selection when text is
+  /// selected via long-press or via the selection handles.
+  Widget? _buildTextSelectionContextMenu(
+    BuildContext context,
+    PdfViewerContextMenuBuilderParams params,
+  ) {
+    if (!params.isTextSelectionEnabled ||
+        !params.textSelectionDelegate.hasSelectedText) {
+      return null;
+    }
+
+    final items = <ContextMenuButtonItem>[
+      ContextMenuButtonItem(
+        onPressed: () => params.textSelectionDelegate.copyTextSelection(),
+        type: ContextMenuButtonType.copy,
+      ),
+    ];
+
+    return Align(
+      alignment: Alignment.topLeft,
+      child: AdaptiveTextSelectionToolbar.buttonItems(
+        anchors: TextSelectionToolbarAnchors(
+          primaryAnchor: params.anchorA,
+          secondaryAnchor: params.anchorB,
+        ),
+        buttonItems: items,
+      ),
+    );
+  }
+
+  Widget _buildBody(
+    ColorScheme colorScheme,
+    SettingsProvider settings, {
+    Key? key,
+  }) {
     if (_isLoading) {
       return Center(
         child: Column(
@@ -573,7 +728,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
       return const Center(child: Text('No PDF loaded'));
     }
 
-    return PdfViewer(
+    final pdfViewerWidget = PdfViewer(
       _documentRef!,
       controller: _pdfController,
       initialPageNumber: _currentPage,
@@ -601,6 +756,12 @@ class _ViewerScreenState extends State<ViewerScreen> {
                 );
               }
             : null,
+                // FEATURE 5 (Phase 2) — Text search match highlighting
+        pagePaintCallbacks: [
+          _searchProvider.pagePaintCallback,
+        ],
+        matchTextColor: const Color.fromARGB(80, 255, 255, 0), // light yellow
+        activeMatchTextColor: const Color.fromARGB(120, 255, 200, 0), // golden yellow
         // FEATURE 3 — Annotations / links overlay
         // pdfrx renders annotations natively (forms + appearances) by default
         // via PdfAnnotationRenderingMode.annotationAndForms.
@@ -643,10 +804,30 @@ class _ViewerScreenState extends State<ViewerScreen> {
             );
           }).toList();
         },
+        // FEATURE 6 — Text selection & copy
+        // Enable pdfrx's built-in text selection which handles:
+        // - Long-press to select words on any page
+        // - Draggable start/end selection handles
+        // - Semi-transparent blue selection highlight
+        // - Floating toolbar with Copy button via buildContextMenu
+        // - Clipboard copy via PdfTextSelectionDelegate.copyTextSelection()
+        // - Dismiss on tap-elsewhere, back-navigation, or after copy
+        textSelectionParams: const PdfTextSelectionParams(),
+        buildContextMenu: _buildTextSelectionContextMenu,
         onDocumentChanged: _onDocumentChanged,
         onViewerReady: _onViewerReady,
         onPageChanged: _onPageChanged,
       ),
+    );
+
+    return KeyedSubtree(
+      key: key,
+      child: settings.darkReadingMode
+          ? ColorFiltered(
+              colorFilter: _invertColorFilter,
+              child: pdfViewerWidget,
+            )
+          : pdfViewerWidget,
     );
   }
 

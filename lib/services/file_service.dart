@@ -37,9 +37,13 @@ class FileService {
   /// Falls back to non-recursive scan for simple cases.
   static Future<List<PdfFile>> scanDirectoryRecursive(String dirPath,
       {int? maxDepth = 10}) async {
-    return Isolate.run(() {
+    final result = await Isolate.run(() {
+      final errors = <String>[];
       final dir = Directory(dirPath);
-      if (!dir.existsSync()) return <PdfFile>[];
+      if (!dir.existsSync()) {
+        errors.add('Directory does not exist or not accessible: $dirPath');
+        return _ScanResult([], errors);
+      }
 
       final pdfFiles = <PdfFile>[];
       final stack = [_ScanEntry(dirPath, 0)];
@@ -52,7 +56,7 @@ class FileService {
         try {
           entities = Directory(entry.path).listSync(followLinks: false);
         } catch (e) {
-          debugPrint('FileService: error listing directory ${entry.path}: $e');
+          errors.add('FileService: error listing directory ${entry.path}: $e');
           continue;
         }
 
@@ -64,7 +68,7 @@ class FileService {
             try {
               pdfFiles.add(PdfFile.fromFileSystem(entity));
             } catch (e) {
-              debugPrint('FileService: error scanning ${entity.path}: $e');
+              errors.add('FileService: error scanning ${entity.path}: $e');
             }
           } else if (entity is Directory) {
             stack.add(_ScanEntry(entity.path, entry.depth + 1));
@@ -73,8 +77,12 @@ class FileService {
       }
 
       pdfFiles.sort((a, b) => b.modified.compareTo(a.modified));
-      return pdfFiles;
+      return _ScanResult(pdfFiles, errors);
     });
+    for (final error in result.errors) {
+      debugPrint('FileService: $error');
+    }
+    return result.files;
   }
 
   /// Read file bytes (for non-encrypted PDFs).
@@ -131,7 +139,8 @@ class FileService {
         return true; // found at least one entry
       }
       return true; // empty dir is still readable
-    } catch (_) {
+    } catch (e) {
+      debugPrint('FileService.isReadable: $path → $e');
       return false;
     }
   }
@@ -142,4 +151,11 @@ class _ScanEntry {
   final String path;
   final int depth;
   const _ScanEntry(this.path, this.depth);
+}
+
+/// Internal result from isolate-based directory scanning.
+class _ScanResult {
+  final List<PdfFile> files;
+  final List<String> errors;
+  const _ScanResult(this.files, this.errors);
 }

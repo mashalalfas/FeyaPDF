@@ -22,6 +22,11 @@ class AppState extends ChangeNotifier {
     _scannedPathsProvider = provider;
   }
 
+  void invalidateCache() {
+    _fileCache.clear();
+    notifyListeners();
+  }
+
   String? get currentDir => _currentDir;
   PdfFile? get selectedFile => _selectedFile;
   bool get hasFiles => _files.isNotEmpty;
@@ -54,7 +59,9 @@ class AppState extends ChangeNotifier {
       _files = _fileCache.containsKey(path)
           ? List.unmodifiable(_fileCache[path]!)
           : await FileService.scanDirectoryRecursive(path, maxDepth: 10);
-      _fileCache[path] = List.unmodifiable(_files);
+      if (_files.isNotEmpty) {
+        _fileCache[path] = List.unmodifiable(_files);
+      }
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -107,10 +114,15 @@ class AppState extends ChangeNotifier {
             final dirFiles = _fileCache.containsKey(path)
                 ? _fileCache[path]!
                 : await FileService.scanDirectoryRecursive(path, maxDepth: 10);
-            _fileCache[path] = List.unmodifiable(dirFiles);
+            if (dirFiles.isNotEmpty) {
+              _fileCache[path] = List.unmodifiable(dirFiles);
+            }
             return dirFiles;
           }
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('AppState: failed to scan directory $path: $e');
+          return <PdfFile>[];
+        }
         return <PdfFile>[];
       }),
     );

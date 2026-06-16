@@ -53,9 +53,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     await pathsProvider.loadScannedPaths();
 
     final persisted = await pathsProvider.loadPersistedDir();
+    bool loaded = false;
     if (persisted != null && await Directory(persisted).exists()) {
       await appState.loadDirectory(persisted);
-    } else if (pathsProvider.scannedPaths.isNotEmpty) {
+      loaded = appState.allFiles.isNotEmpty || appState.error != null;
+    }
+    if (!loaded && pathsProvider.scannedPaths.isNotEmpty) {
       await appState.loadAllDirectories(pathsProvider.scannedPaths);
     }
     if (mounted) {

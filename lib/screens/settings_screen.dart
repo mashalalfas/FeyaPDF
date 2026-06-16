@@ -132,6 +132,35 @@ class SettingsScreen extends StatelessWidget {
             value: settings.continuousScroll,
             onChanged: (v) => settings.setContinuousScroll(v),
           ),
+          SwitchListTile(
+            secondary: const Icon(Icons.grid_view_rounded),
+            title: const Text('Show thumbnails'),
+            subtitle: Text(
+              'Show a thumbnail grid button while reading',
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 13,
+              ),
+            ),
+            value: settings.showThumbnails,
+            onChanged: (v) => settings.setShowThumbnails(v),
+          ),
+          SwitchListTile(
+            secondary: Icon(Icons.dark_mode_rounded,
+                color: settings.darkReadingMode
+                    ? colorScheme.primary
+                    : null),
+            title: const Text('Dark reading mode'),
+            subtitle: Text(
+              'Invert PDF colors for comfortable reading in low light',
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 13,
+              ),
+            ),
+            value: settings.darkReadingMode,
+            onChanged: (v) => settings.setDarkReadingMode(v),
+          ),
 
           const SizedBox(height: 8),
 

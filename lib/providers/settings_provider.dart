@@ -13,11 +13,15 @@ class SettingsProvider extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.system;
   bool _autoEncrypt = false;
   bool _continuousScroll = false;
+  bool _darkReadingMode = false;
+  bool _showThumbnails = true;
   UserProfile _userProfile = const UserProfile();
 
   ThemeMode get themeMode => _themeMode;
   bool get autoEncrypt => _autoEncrypt;
   bool get continuousScroll => _continuousScroll;
+  bool get darkReadingMode => _darkReadingMode;
+  bool get showThumbnails => _showThumbnails;
   UserProfile get userProfile => _userProfile;
 
   int? getLastReadPage(String path) => _service.getLastReadPage(path);
@@ -29,6 +33,8 @@ class SettingsProvider extends ChangeNotifier {
     _themeMode = _themeModeFromString(_service.themeMode);
     _autoEncrypt = _service.autoEncrypt;
     _continuousScroll = _service.continuousScroll;
+    _darkReadingMode = _service.darkReadingMode;
+    _showThumbnails = _service.showThumbnails;
     _userProfile = _service.userProfile;
   }
 
@@ -47,6 +53,18 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> setContinuousScroll(bool value) async {
     _continuousScroll = value;
     await _service.setContinuousScroll(value);
+    notifyListeners();
+  }
+
+  Future<void> setDarkReadingMode(bool value) async {
+    _darkReadingMode = value;
+    await _service.setDarkReadingMode(value);
+    notifyListeners();
+  }
+
+  Future<void> setShowThumbnails(bool value) async {
+    _showThumbnails = value;
+    await _service.setShowThumbnails(value);
     notifyListeners();
   }
 

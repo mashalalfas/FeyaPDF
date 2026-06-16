@@ -15,6 +15,8 @@ class SettingsService {
   static const _kLastDir = '${_prefix}last_dir'; // string (migrated from old key)
   static const _kLastReadPositions = '${_prefix}last_read'; // JSON map of path -> page
   static const _kContinuousScroll = '${_prefix}continuous_scroll'; // bool
+  static const _kDarkReadingMode = '${_prefix}dark_reading_mode'; // bool
+  static const _kShowThumbnails = '${_prefix}show_thumbnails'; // bool
 
   final SharedPreferences _prefs;
 
@@ -64,6 +66,16 @@ class SettingsService {
   bool get continuousScroll => _prefs.getBool(_kContinuousScroll) ?? false;
   Future<void> setContinuousScroll(bool value) =>
       _prefs.setBool(_kContinuousScroll, value);
+
+  // --- Dark reading mode ---
+  bool get darkReadingMode => _prefs.getBool(_kDarkReadingMode) ?? false;
+  Future<void> setDarkReadingMode(bool value) =>
+      _prefs.setBool(_kDarkReadingMode, value);
+
+  // --- Show thumbnails ---
+  bool get showThumbnails => _prefs.getBool(_kShowThumbnails) ?? true;
+  Future<void> setShowThumbnails(bool value) =>
+      _prefs.setBool(_kShowThumbnails, value);
 
   // --- Migration from existing keys ---
   Future<void> migrateLegacyKeys() async {
