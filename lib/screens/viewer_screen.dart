@@ -32,6 +32,15 @@ class _ViewerScreenState extends State<ViewerScreen> {
   bool _isSvgFile = false;
   String? _svgError;
 
+  // Outline / table of contents state
+  List<PdfOutlineNode>? _outline;
+  bool _outlineLoading = false;
+
+  // Seek-to-page state (tapping the page counter)
+  bool _showPageSeek = false;
+  final _pageSeekController = TextEditingController();
+  final _pageSeekFocus = FocusNode();
+
   @override
   void initState() {
     super.initState();
@@ -179,6 +188,26 @@ class _ViewerScreenState extends State<ViewerScreen> {
     }
     // Pre-load links for the currently visible page
     _loadPageLinks(document, controller.pageNumber ?? _currentPage);
+    // Pre-load outline in the background
+    _loadOutline(document);
+  }
+
+  /// Load the PDF outline (table of contents) in the background.
+  Future<void> _loadOutline(PdfDocument document) async {
+    if (_outline != null || _outlineLoading) return;
+    _outlineLoading = true;
+    try {
+      final nodes = await document.loadOutline();
+      if (mounted) {
+        setState(() => _outline = nodes);
+      }
+    } catch (_) {
+      // Silently ignore — outline is optional
+    } finally {
+      if (mounted) {
+        setState(() => _outlineLoading = false);
+      }
+    }
   }
 
   /// Called when the viewer notifies a page change.
@@ -202,6 +231,8 @@ class _ViewerScreenState extends State<ViewerScreen> {
 
   @override
   void dispose() {
+    _pageSeekController.dispose();
+    _pageSeekFocus.dispose();
     // PdfViewerController is a ValueListenable; it is cleaned up by the PdfViewer widget.
     // PdfDocumentRef auto-disposes the underlying document when autoDispose=true (default).
     super.dispose();
@@ -259,9 +290,177 @@ class _ViewerScreenState extends State<ViewerScreen> {
     );
   }
 
+  /// FEATURE 1.2 — Show PDF outline / table of contents as a bottom sheet.
+  void _showOutline() {
+    final controller = _pdfController;
+    if (controller == null) return;
+
+    final outline = _outline;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        final cs = Theme.of(ctx).colorScheme;
+        return DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          minChildSize: 0.3,
+          maxChildSize: 0.92,
+          expand: false,
+          builder: (ctx, scrollController) {
+            if (outline == null || outline.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.list_alt_rounded,
+                      size: 48,
+                      color: cs.onSurfaceVariant.withValues(alpha: 0.4),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      _outlineLoading
+                          ? 'Loading contents…'
+                          : 'No table of contents',
+                      style: TextStyle(
+                        color: cs.onSurfaceVariant,
+                        fontSize: 15,
+                      ),
+                    ),
+                    if (_outlineLoading) ...[
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: cs.primary,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            }
+
+            return Column(
+              children: [
+                // Handle bar
+                Container(
+                  width: 32,
+                  height: 4,
+                  margin: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: cs.onSurfaceVariant.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+                  child: Row(
+                    children: [
+                      Icon(Icons.list_alt_rounded,
+                          size: 20, color: cs.primary),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Contents',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: cs.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(color: cs.outlineVariant.withValues(alpha: 0.3)),
+                Expanded(
+                  child: ListView.builder(
+                    controller: scrollController,
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    itemCount: _flattenOutline(outline).length,
+                    itemBuilder: (_, index) {
+                      final item = _flattenOutline(outline)[index];
+                      return _buildOutlineTile(ctx, item.node, item.depth);
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// Flatten the outline tree into a list of (node, depth) pairs.
+  List<({PdfOutlineNode node, int depth})> _flattenOutline(
+    List<PdfOutlineNode> nodes, [
+    int depth = 0,
+  ]) {
+    final result = <({PdfOutlineNode node, int depth})>[];
+    for (final node in nodes) {
+      result.add((node: node, depth: depth));
+      result.addAll(_flattenOutline(node.children, depth + 1));
+    }
+    return result;
+  }
+
+  /// Build a single outline entry tile.
+  Widget _buildOutlineTile(
+    BuildContext ctx,
+    PdfOutlineNode node,
+    int depth,
+  ) {
+    final controller = _pdfController;
+    final cs = Theme.of(ctx).colorScheme;
+    final hasDest = node.dest != null;
+
+    return ListTile(
+      dense: true,
+      contentPadding: EdgeInsets.only(
+        left: 16.0 + depth * 20.0,
+        right: 16,
+      ),
+      leading: Icon(
+        hasDest ? Icons.article_outlined : Icons.folder_outlined,
+        size: 18,
+        color: hasDest
+            ? cs.onSurfaceVariant.withValues(alpha: 0.7)
+            : cs.primary.withValues(alpha: 0.6),
+      ),
+      title: Text(
+        node.title,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight:
+              depth == 0 ? FontWeight.w600 : FontWeight.w400,
+          color: cs.onSurface,
+        ),
+      ),
+      onTap: hasDest
+          ? () {
+              Navigator.pop(ctx);
+              if (controller != null) {
+                controller.goToDest(node.dest);
+              }
+            }
+          : null,
+      enabled: hasDest,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final settings = context.watch<SettingsProvider>();
 
     return Scaffold(
       appBar: AppBar(
@@ -282,6 +481,19 @@ class _ViewerScreenState extends State<ViewerScreen> {
           ],
         ),
         actions: [
+          // FEATURE 1.2 — Outline / ToC button
+          if (!_isSvgFile && _totalPages > 0)
+            IconButton(
+              icon: Icon(
+                Icons.list_alt_rounded,
+                size: 20,
+                color: _outline != null && _outline!.isNotEmpty
+                    ? colorScheme.primary
+                    : null,
+              ),
+              tooltip: 'Table of Contents',
+              onPressed: _showOutline,
+            ),
           // FEATURE 1: Save icon is always visible
           IconButton(
             icon: const Icon(Icons.save_alt_rounded, size: 20),
@@ -295,14 +507,14 @@ class _ViewerScreenState extends State<ViewerScreen> {
           ),
         ],
       ),
-      body: _buildBody(colorScheme),
+      body: _buildBody(colorScheme, settings),
       bottomNavigationBar: !_isSvgFile && _totalPages > 0
           ? _buildPageIndicator(colorScheme)
           : null,
     );
   }
 
-  Widget _buildBody(ColorScheme colorScheme) {
+  Widget _buildBody(ColorScheme colorScheme, SettingsProvider settings) {
     if (_isLoading) {
       return Center(
         child: Column(
@@ -366,6 +578,29 @@ class _ViewerScreenState extends State<ViewerScreen> {
       controller: _pdfController,
       initialPageNumber: _currentPage,
       params: PdfViewerParams(
+        // FEATURE 1.5 — Continuous scroll mode vs single-page mode
+        layoutPages: settings.continuousScroll
+            ? (pages, params) {
+                var y = params.margin;
+                final layouts = <Rect>[];
+                for (final page in pages) {
+                  layouts.add(Rect.fromLTWH(
+                    params.margin,
+                    y,
+                    page.width,
+                    page.height,
+                  ));
+                  y += page.height + params.margin;
+                }
+                return PdfPageLayout(
+                  pageLayouts: layouts,
+                  documentSize: Size(
+                    pages.isEmpty ? 0 : pages.first.width + params.margin * 2,
+                    y,
+                  ),
+                );
+              }
+            : null,
         // FEATURE 3 — Annotations / links overlay
         // pdfrx renders annotations natively (forms + appearances) by default
         // via PdfAnnotationRenderingMode.annotationAndForms.
@@ -482,51 +717,139 @@ class _ViewerScreenState extends State<ViewerScreen> {
       return const SizedBox.shrink();
     }
 
+    void seekToPage(String input) {
+      final parsed = int.tryParse(input.trim());
+      if (parsed != null && parsed >= 1 && parsed <= _totalPages) {
+        controller.goToPage(pageNumber: parsed);
+      }
+      setState(() {
+        _showPageSeek = false;
+        _pageSeekController.clear();
+      });
+      _pageSeekFocus.unfocus();
+    }
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
         border: Border(
           top: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.3)),
         ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.chevron_left_rounded),
-            onPressed: _currentPage > 1
-                ? () => controller.goToPage(pageNumber: _currentPage - 1)
-                : null,
-            iconSize: 24,
-            visualDensity: VisualDensity.compact,
-          ),
-          const SizedBox(width: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-            decoration: BoxDecoration(
-              color: colorScheme.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(20),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // FEATURE 5.2 — First Page button
+            IconButton(
+              icon: const Icon(Icons.first_page_rounded),
+              onPressed: _currentPage > 1
+                  ? () => controller.goToPage(pageNumber: 1)
+                  : null,
+              iconSize: 22,
+              visualDensity: VisualDensity.compact,
+              tooltip: 'First page',
             ),
-            child: Text(
-              '$_currentPage / $_totalPages',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: colorScheme.primary,
-              ),
+            const SizedBox(width: 4),
+            IconButton(
+              icon: const Icon(Icons.chevron_left_rounded),
+              onPressed: _currentPage > 1
+                  ? () => controller.goToPage(pageNumber: _currentPage - 1)
+                  : null,
+              iconSize: 24,
+              visualDensity: VisualDensity.compact,
             ),
-          ),
-          const SizedBox(width: 16),
-          IconButton(
-            icon: const Icon(Icons.chevron_right_rounded),
-            onPressed: _currentPage < _totalPages
-                ? () => controller.goToPage(pageNumber: _currentPage + 1)
-                : null,
-            iconSize: 24,
-            visualDensity: VisualDensity.compact,
-          ),
-        ],
+            const SizedBox(width: 8),
+            // FEATURE 5.2 — Tappable page counter → inline seek
+            _showPageSeek
+                ? SizedBox(
+                    width: 72,
+                    child: TextField(
+                      controller: _pageSeekController,
+                      focusNode: _pageSeekFocus,
+                      autofocus: true,
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.primary,
+                      ),
+                      decoration: InputDecoration(
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 6,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          borderSide: BorderSide(color: colorScheme.primary),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          borderSide: BorderSide(
+                            color: colorScheme.primary,
+                            width: 1.5,
+                          ),
+                        ),
+                        hintText: '$_totalPages',
+                        hintStyle: TextStyle(
+                          fontSize: 13,
+                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                        ),
+                      ),
+                      onSubmitted: seekToPage,
+                      onTapOutside: (_) => seekToPage(_pageSeekController.text),
+                    ),
+                  )
+                : GestureDetector(
+                    onTap: () {
+                      setState(() => _showPageSeek = true);
+                      _pageSeekController.text = '';
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '$_currentPage / $_totalPages',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.chevron_right_rounded),
+              onPressed: _currentPage < _totalPages
+                  ? () => controller.goToPage(pageNumber: _currentPage + 1)
+                  : null,
+              iconSize: 24,
+              visualDensity: VisualDensity.compact,
+            ),
+            const SizedBox(width: 4),
+            // FEATURE 5.2 — Last Page button
+            IconButton(
+              icon: const Icon(Icons.last_page_rounded),
+              onPressed: _currentPage < _totalPages
+                  ? () => controller.goToPage(pageNumber: _totalPages)
+                  : null,
+              iconSize: 22,
+              visualDensity: VisualDensity.compact,
+              tooltip: 'Last page',
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -12,10 +12,12 @@ class SettingsProvider extends ChangeNotifier {
 
   ThemeMode _themeMode = ThemeMode.system;
   bool _autoEncrypt = false;
+  bool _continuousScroll = false;
   UserProfile _userProfile = const UserProfile();
 
   ThemeMode get themeMode => _themeMode;
   bool get autoEncrypt => _autoEncrypt;
+  bool get continuousScroll => _continuousScroll;
   UserProfile get userProfile => _userProfile;
 
   int? getLastReadPage(String path) => _service.getLastReadPage(path);
@@ -26,6 +28,7 @@ class SettingsProvider extends ChangeNotifier {
   void _init() {
     _themeMode = _themeModeFromString(_service.themeMode);
     _autoEncrypt = _service.autoEncrypt;
+    _continuousScroll = _service.continuousScroll;
     _userProfile = _service.userProfile;
   }
 
@@ -38,6 +41,12 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> setAutoEncrypt(bool value) async {
     _autoEncrypt = value;
     await _service.setAutoEncrypt(value);
+    notifyListeners();
+  }
+
+  Future<void> setContinuousScroll(bool value) async {
+    _continuousScroll = value;
+    await _service.setContinuousScroll(value);
     notifyListeners();
   }
 

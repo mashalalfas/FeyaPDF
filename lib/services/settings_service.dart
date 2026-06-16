@@ -14,6 +14,7 @@ class SettingsService {
   static const _kUserProfile = '${_prefix}user_profile'; // JSON string
   static const _kLastDir = '${_prefix}last_dir'; // string (migrated from old key)
   static const _kLastReadPositions = '${_prefix}last_read'; // JSON map of path -> page
+  static const _kContinuousScroll = '${_prefix}continuous_scroll'; // bool
 
   final SharedPreferences _prefs;
 
@@ -58,6 +59,11 @@ class SettingsService {
     current[path] = page;
     await _prefs.setString(_kLastReadPositions, jsonEncode(current));
   }
+
+  // --- Continuous scroll mode ---
+  bool get continuousScroll => _prefs.getBool(_kContinuousScroll) ?? false;
+  Future<void> setContinuousScroll(bool value) =>
+      _prefs.setBool(_kContinuousScroll, value);
 
   // --- Migration from existing keys ---
   Future<void> migrateLegacyKeys() async {

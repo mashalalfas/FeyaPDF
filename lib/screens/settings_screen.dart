@@ -117,6 +117,24 @@ class SettingsScreen extends StatelessWidget {
 
           const SizedBox(height: 8),
 
+          // ── Reader Section ──
+          _SectionHeader('Reader'),
+          SwitchListTile(
+            secondary: const Icon(Icons.view_column_rounded),
+            title: const Text('Continuous scroll'),
+            subtitle: Text(
+              'Scroll pages vertically instead of swiping one at a time',
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 13,
+              ),
+            ),
+            value: settings.continuousScroll,
+            onChanged: (v) => settings.setContinuousScroll(v),
+          ),
+
+          const SizedBox(height: 8),
+
           // ── Appearance Section ──
           _SectionHeader('Appearance'),
           ListTile(
