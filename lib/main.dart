@@ -15,8 +15,11 @@ import 'providers/file_operations_provider.dart';
 import 'services/settings_service.dart';
 import 'services/tag_service.dart';
 import 'services/intent_handler.dart';
+import 'services/highlight_service.dart';
+import 'providers/highlight_provider.dart';
 import 'theme.dart';
 import 'screens/home_screen.dart';
+import 'widgets/app_lock_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,6 +45,9 @@ void main() async {
         ChangeNotifierProvider(create: (_) => RecentFilesProvider()),
         ChangeNotifierProvider(create: (_) => ScannedPathsProvider()),
         ChangeNotifierProvider(create: (_) => FileOperationsProvider()),
+        ChangeNotifierProvider(
+          create: (_) => HighlightProvider(HighlightService(prefs)),
+        ),
         ChangeNotifierProvider(create: (_) => AppState()),
       ],
       child: const FeyaPdfApp(),
@@ -94,7 +100,7 @@ class _FeyaPdfAppState extends State<FeyaPdfApp> {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: settings.themeMode,
-      home: const HomeScreen(),
+      home: AppLockGate(child: const HomeScreen()),
     );
   }
 }

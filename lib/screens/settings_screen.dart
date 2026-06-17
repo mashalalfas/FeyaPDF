@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/encryption_provider.dart';
 import '../providers/settings_provider.dart';
+import '../services/app_lock_service.dart';
 import '../widgets/passphrase_dialog.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -99,8 +100,8 @@ class SettingsScreen extends StatelessWidget {
                   fontSize: 13,
                 ),
               ),
-              onTap: () {
-                encryption.clearPassphrase();
+              onTap: () async {
+                await encryption.clearPassphrase();
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -114,6 +115,12 @@ class SettingsScreen extends StatelessWidget {
                 }
               },
             ),
+
+          const SizedBox(height: 8),
+
+          // ── App Lock Section ──
+          _SectionHeader('App Lock'),
+          _AppLockTile(settings: settings),
 
           const SizedBox(height: 8),
 
@@ -329,6 +336,442 @@ class SettingsScreen extends StatelessWidget {
             child: const Text('Save'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// App Lock settings tile: PIN setup, change, toggle, biometric toggle.
+class _AppLockTile extends StatefulWidget {
+  final SettingsProvider settings;
+
+  const _AppLockTile({required this.settings});
+
+  @override
+  State<_AppLockTile> createState() => _AppLockTileState();
+}
+
+class _AppLockTileState extends State<_AppLockTile> {
+  final AppLockService _lockService = AppLockService();
+  bool _hasPin = false;
+  bool _biometricAvailable = false;
+  bool _biometricEnabled = false;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadState();
+  }
+
+  Future<void> _loadState() async {
+    final hasPin = await _lockService.hasPin();
+    final bioAvail = await _lockService.isBiometricAvailable();
+    final bioEnabled = await _lockService.getBiometricEnabled();
+    if (mounted) {
+      setState(() {
+        _hasPin = hasPin;
+        _biometricAvailable = bioAvail;
+        _biometricEnabled = bioEnabled;
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    if (_loading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        // App lock toggle
+        SwitchListTile(
+          secondary: Icon(
+            widget.settings.appLockEnabled
+                ? Icons.lock_rounded
+                : Icons.lock_open_rounded,
+          ),
+          title: const Text('App lock'),
+          subtitle: Text(
+            _hasPin
+                ? 'Lock the app behind a PIN or biometric'
+                : 'Set up a PIN first',
+            style: TextStyle(
+              color: colorScheme.onSurfaceVariant,
+              fontSize: 13,
+            ),
+          ),
+          value: widget.settings.appLockEnabled && _hasPin,
+          onChanged: _hasPin
+              ? (v) => widget.settings.setAppLockEnabled(v)
+              : null,
+        ),
+
+        // Set / change PIN
+        ListTile(
+          leading: Icon(
+            _hasPin ? Icons.lock_reset_rounded : Icons.pin_rounded,
+          ),
+          title: Text(_hasPin ? 'Change PIN' : 'Set PIN'),
+          subtitle: Text(
+            _hasPin
+                ? 'Change your app unlock PIN'
+                : 'Create a PIN to lock the app',
+            style: TextStyle(
+              color: colorScheme.onSurfaceVariant,
+              fontSize: 13,
+            ),
+          ),
+          trailing: const Icon(Icons.chevron_right_rounded),
+          onTap: () => _showPinSetupDialog(context),
+        ),
+
+        // Biometric toggle (only if available and PIN is set)
+        if (_biometricAvailable && _hasPin)
+          SwitchListTile(
+            secondary: const Icon(Icons.fingerprint_rounded),
+            title: const Text('Unlock with biometrics'),
+            subtitle: Text(
+              _biometricEnabled
+                  ? 'Fingerprint or face unlock enabled'
+                  : 'Use fingerprint or face to unlock',
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 13,
+              ),
+            ),
+            value: _biometricEnabled,
+            onChanged: (v) async {
+              await _lockService.setBiometricEnabled(v);
+              setState(() => _biometricEnabled = v);
+            },
+          ),
+
+        // Clear PIN (only if set)
+        if (_hasPin)
+          ListTile(
+            leading: Icon(Icons.delete_forever_rounded,
+                color: colorScheme.error),
+            title: Text('Remove PIN',
+                style: TextStyle(color: colorScheme.error)),
+            subtitle: Text(
+              'Disable app lock and clear stored PIN',
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 13,
+              ),
+            ),
+            onTap: () => _confirmRemovePin(context),
+          ),
+      ],
+    );
+  }
+
+  void _showPinSetupDialog(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    String pin = '';
+    String confirmPin = '';
+    bool step2 = false;
+    String? step2Error;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: Text(step2 ? 'Confirm PIN' : 'Set PIN'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    step2
+                        ? 'Enter your PIN again to confirm'
+                        : 'Enter a 4-6 digit PIN',
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Pin dots display
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      step2 ? confirmPin.length : pin.length,
+                      (i) => Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (step2Error != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      step2Error!,
+                      style: TextStyle(
+                        color: colorScheme.error,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  // Inline keypad
+                  _PinSetupKeypad(
+                    onDigit: (d) {
+                      setDialogState(() {
+                        if (!step2) {
+                          if (pin.length < 6) {
+                            pin += String.fromCharCode(48 + d);
+                          }
+                          if (pin.length >= 4 && pin.length <= 6) {
+                            // Auto-proceed to confirm if user stops
+                          }
+                        } else {
+                          if (confirmPin.length < 6) {
+                            confirmPin += String.fromCharCode(48 + d);
+                          }
+                        }
+                        step2Error = null;
+                      });
+                    },
+                    onDelete: () {
+                      setDialogState(() {
+                        if (!step2) {
+                          if (pin.isNotEmpty) {
+                            pin = pin.substring(0, pin.length - 1);
+                          }
+                        } else {
+                          if (confirmPin.isNotEmpty) {
+                            confirmPin = confirmPin.substring(0, confirmPin.length - 1);
+                          }
+                        }
+                      });
+                    },
+                    canDelete: (!step2 && pin.isNotEmpty) ||
+                        (step2 && confirmPin.isNotEmpty),
+                    colorScheme: colorScheme,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancel'),
+                ),
+                if (!step2 && pin.length >= 4)
+                  FilledButton(
+                    onPressed: () {
+                      setDialogState(() {
+                        step2 = true;
+                      });
+                    },
+                    child: const Text('Continue'),
+                  ),
+                if (step2 && confirmPin.length >= 4)
+                  FilledButton(
+                    onPressed: () async {
+                      if (pin == confirmPin) {
+                        await _lockService.setPin(pin);
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        if (context.mounted) {
+                          final messenger = ScaffoldMessenger.of(context);
+                          await widget.settings.setAppLockEnabled(true);
+                          _loadState();
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: const Text('PIN set successfully'),
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          );
+                        }
+                      } else {
+                        setDialogState(() {
+                          step2Error = 'PINs do not match';
+                          confirmPin = '';
+                        });
+                      }
+                    },
+                    child: const Text('Confirm'),
+                  ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _confirmRemovePin(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Remove PIN?'),
+        content: const Text(
+          'This will disable app lock and delete your stored PIN. '
+          'You will need to set a new PIN to lock the app again.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: colorScheme.error,
+            ),
+            onPressed: () async {
+              await _lockService.clearPin();
+              await widget.settings.setAppLockEnabled(false);
+              if (ctx.mounted) Navigator.pop(ctx);
+              if (context.mounted) {
+                final messenger = ScaffoldMessenger.of(context);
+                _loadState();
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: const Text('PIN removed'),
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                );
+              }
+            },
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Small inline keypad used in the PIN setup dialog.
+class _PinSetupKeypad extends StatelessWidget {
+  final void Function(int digit) onDigit;
+  final VoidCallback onDelete;
+  final bool canDelete;
+  final ColorScheme colorScheme;
+
+  const _PinSetupKeypad({
+    required this.onDigit,
+    required this.onDelete,
+    required this.canDelete,
+    required this.colorScheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const rows = [
+      [1, 2, 3],
+      [4, 5, 6],
+      [7, 8, 9],
+    ];
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final row in rows)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: row.map((d) => _SetupKey(
+                    label: '$d',
+                    onTap: () => onDigit(d),
+                  )).toList(),
+            ),
+          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(width: 60),
+            _SetupKey(
+              label: '0',
+              onTap: () => onDigit(0),
+            ),
+            _SetupKey(
+              icon: Icons.backspace_outlined,
+              onTap: canDelete ? onDelete : null,
+              disabled: !canDelete,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _SetupKey extends StatelessWidget {
+  final String? label;
+  final IconData? icon;
+  final VoidCallback? onTap;
+  final bool disabled;
+
+  const _SetupKey({
+    this.label,
+    this.icon,
+    this.onTap,
+    this.disabled = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final fg = disabled
+        ? colorScheme.onSurface.withValues(alpha: 0.15)
+        : colorScheme.onSurface;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Material(
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: disabled ? null : onTap,
+          child: Container(
+            width: 60,
+            height: 52,
+            alignment: Alignment.center,
+            child: label != null
+                ? Text(
+                    label!,
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w500,
+                      color: fg,
+                    ),
+                  )
+                : Icon(icon, size: 22, color: fg),
+          ),
+        ),
       ),
     );
   }

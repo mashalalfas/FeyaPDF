@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/encryption_service.dart';
 
 /// Manages passphrase state and file encryption/decryption.
@@ -18,8 +19,11 @@ class EncryptionProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void clearPassphrase() {
+  Future<void> clearPassphrase() async {
     _passphrase = null;
+    // Also clear stored biometric passphrase
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('_feya_bio_passphrase');
     notifyListeners();
   }
 

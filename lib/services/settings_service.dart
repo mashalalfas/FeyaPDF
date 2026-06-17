@@ -17,6 +17,7 @@ class SettingsService {
   static const _kContinuousScroll = '${_prefix}continuous_scroll'; // bool
   static const _kDarkReadingMode = '${_prefix}dark_reading_mode'; // bool
   static const _kShowThumbnails = '${_prefix}show_thumbnails'; // bool
+  static const _kAppLockEnabled = '${_prefix}app_lock_enabled'; // bool
 
   final SharedPreferences _prefs;
 
@@ -76,6 +77,11 @@ class SettingsService {
   bool get showThumbnails => _prefs.getBool(_kShowThumbnails) ?? true;
   Future<void> setShowThumbnails(bool value) =>
       _prefs.setBool(_kShowThumbnails, value);
+
+  // --- App lock ---
+  bool get appLockEnabled => _prefs.getBool(_kAppLockEnabled) ?? false;
+  Future<void> setAppLockEnabled(bool value) =>
+      _prefs.setBool(_kAppLockEnabled, value);
 
   // --- Migration from existing keys ---
   Future<void> migrateLegacyKeys() async {

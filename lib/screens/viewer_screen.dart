@@ -8,9 +8,12 @@ import '../providers/encryption_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/file_operations_provider.dart';
 import '../providers/search_provider.dart';
-import '../widgets/passphrase_dialog.dart';
+import '../widgets/biometric_unlock_dialog.dart';
 import '../widgets/search_bar.dart';
 import '../widgets/thumbnail_grid.dart';
+import '../widgets/highlights_panel.dart';
+import '../providers/highlight_provider.dart';
+import '../models/highlight.dart';
 
 /// Color matrix that inverts all RGB channels (255 - value) while preserving alpha.
 /// Used by Dark Reading Mode to create a negative effect on the PDF canvas.
@@ -52,6 +55,8 @@ class _ViewerScreenState extends State<ViewerScreen> {
   final _searchProvider = SearchProvider();
   bool _showSearchBar = false;
 
+  // No additional panel state needed beyond provider
+
   // Seek-to-page state (tapping the page counter)
   bool _showPageSeek = false;
   final _pageSeekController = TextEditingController();
@@ -62,6 +67,12 @@ class _ViewerScreenState extends State<ViewerScreen> {
     super.initState();
     _isSvgFile = widget.file.path.endsWith('.svg');
     _loadPdf();
+    // Notify the highlight provider that this file is open
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<HighlightProvider>().openFile(widget.file.path);
+      }
+    });
   }
 
   Future<void> _loadPdf() async {
@@ -100,9 +111,9 @@ class _ViewerScreenState extends State<ViewerScreen> {
     final lastPage = settings.getLastReadPage(widget.file.path);
     final initialPage = (lastPage != null && lastPage > 0) ? lastPage : 1;
 
-    // If encrypted and no passphrase, prompt
+    // If encrypted and no passphrase, prompt with biometric unlock
     if (widget.file.isEncrypted && !encryption.hasPassphrase) {
-      final set = await showPassphraseDialog(context);
+      final set = await showBiometricUnlockDialog(context);
       if (!set || !mounted) {
         if (mounted) Navigator.pop(context);
         return;
@@ -204,6 +215,9 @@ class _ViewerScreenState extends State<ViewerScreen> {
     }
     // Attach the search provider to the viewer controller
     _searchProvider.attach(controller);
+
+    // Pre-cache PDF page texts for highlight rendering
+    context.read<HighlightProvider>().cachePageTexts(document);
     // Pre-load links for the currently visible page
     _loadPageLinks(document, controller.pageNumber ?? _currentPage);
     // Pre-load outline in the background
@@ -252,6 +266,10 @@ class _ViewerScreenState extends State<ViewerScreen> {
     _searchProvider.dispose();
     _pageSeekController.dispose();
     _pageSeekFocus.dispose();
+    // Clear highlight page text cache for this document
+    try {
+      context.read<HighlightProvider>().closeFile();
+    } catch (_) {}
     // PdfViewerController is a ValueListenable; it is cleaned up by the PdfViewer widget.
     // PdfDocumentRef auto-disposes the underlying document when autoDispose=true (default).
     super.dispose();
@@ -572,6 +590,44 @@ class _ViewerScreenState extends State<ViewerScreen> {
                 });
               },
             ),
+          // Highlight mode toggle
+          if (!_isSvgFile && _totalPages > 0)
+            IconButton(
+              icon: Icon(
+                context.watch<HighlightProvider>().highlightMode
+                    ? Icons.highlight_rounded
+                    : Icons.highlight_outlined,
+                size: 20,
+                color: context.watch<HighlightProvider>().highlightMode
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+              ),
+              tooltip: context.watch<HighlightProvider>().highlightMode
+                  ? 'Exit highlight mode'
+                  : 'Highlight mode',
+              onPressed: () {
+                context
+                    .read<HighlightProvider>()
+                    .toggleHighlightMode();
+              },
+            ),
+          // View highlights panel button
+          if (!_isSvgFile && _totalPages > 0)
+            IconButton(
+              icon: Icon(
+                Icons.highlight_alt_rounded,
+                size: 20,
+                color: context.watch<HighlightProvider>().showPanel
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+              ),
+              tooltip: 'View highlights',
+              onPressed: () {
+                context
+                    .read<HighlightProvider>()
+                    .togglePanel();
+              },
+            ),
           // FEATURE 1: Save icon is always visible
           IconButton(
             icon: const Icon(Icons.save_alt_rounded, size: 20),
@@ -613,6 +669,25 @@ class _ViewerScreenState extends State<ViewerScreen> {
                   )
                 : const SizedBox.shrink(),
           ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
+            child: context.watch<HighlightProvider>().showPanel
+                ? SizedBox(
+                    height: 250,
+                    child: HighlightsPanel(
+                      onNavigateToPage: (page) {
+                        _pdfController?.goToPage(pageNumber: page);
+                        context.read<HighlightProvider>().setShowPanel(false);
+                      },
+                      onClose: () => context
+                          .read<HighlightProvider>()
+                          .setShowPanel(false),
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
           Expanded(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
@@ -633,7 +708,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
     );
   }
 
-  /// Build the text selection context menu with a Copy button.
+  /// Build the text selection context menu with Copy and Highlight buttons.
   ///
   /// Appears as a floating toolbar above the selection when text is
   /// selected via long-press or via the selection handles.
@@ -652,6 +727,44 @@ class _ViewerScreenState extends State<ViewerScreen> {
         type: ContextMenuButtonType.copy,
       ),
     ];
+
+    // Add a Highlight button to the context menu
+    items.add(
+      ContextMenuButtonItem(
+        onPressed: () async {
+          // Get the selected text
+          final selectedText =
+              await params.textSelectionDelegate.getSelectedText();
+          if (selectedText.isEmpty) return;
+
+          // Get the text ranges to determine page
+          final ranges =
+              await params.textSelectionDelegate.getSelectedTextRanges();
+          if (ranges.isEmpty) return;
+
+          final highlight = HighlightData(
+            filePath: widget.file.path,
+            pageNumber: ranges.first.pageNumber,
+            text: selectedText,
+          );
+
+          if (context.mounted) {
+            final messenger = ScaffoldMessenger.of(context);
+            final provider = context.read<HighlightProvider>();
+            await provider.addHighlight(highlight);
+
+            messenger.showSnackBar(
+              SnackBar(
+                content: Text('Highlight added on page ${highlight.pageNumber}'),
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
+        },
+        label: 'Highlight',
+      ),
+    );
 
     return Align(
       alignment: Alignment.topLeft,
@@ -759,6 +872,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
                 // FEATURE 5 (Phase 2) — Text search match highlighting
         pagePaintCallbacks: [
           _searchProvider.pagePaintCallback,
+          context.read<HighlightProvider>().paintHighlights,
         ],
         matchTextColor: const Color.fromARGB(80, 255, 255, 0), // light yellow
         activeMatchTextColor: const Color.fromARGB(120, 255, 200, 0), // golden yellow
