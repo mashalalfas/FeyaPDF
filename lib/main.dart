@@ -4,6 +4,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'providers/app_state.dart';
+import 'providers/favorites_provider.dart';
 import 'providers/encryption_provider.dart';
 import 'providers/secure_folder_provider.dart';
 import 'providers/settings_provider.dart';
@@ -12,11 +13,16 @@ import 'providers/sort_search_provider.dart';
 import 'providers/recent_files_provider.dart';
 import 'providers/scanned_paths_provider.dart';
 import 'providers/file_operations_provider.dart';
+import 'providers/selection_provider.dart';
 import 'services/settings_service.dart';
 import 'services/tag_service.dart';
 import 'services/intent_handler.dart';
 import 'services/highlight_service.dart';
+import 'services/bookmark_service.dart';
 import 'providers/highlight_provider.dart';
+import 'providers/bookmark_provider.dart';
+import 'providers/backup_provider.dart';
+import 'services/backup_service.dart';
 import 'theme.dart';
 import 'screens/home_screen.dart';
 import 'widgets/app_lock_screen.dart';
@@ -30,6 +36,14 @@ void main() async {
   // Storage migration: rename MelodyPDF → FeyaPDF directories
   await _migrateDirectories();
   final tagService = TagService(prefs);
+  final highlightService = HighlightService(prefs);
+  final bookmarkService = BookmarkService(prefs);
+  final backupService = BackupService(
+    settingsService: settingsService,
+    tagService: tagService,
+    highlightService: highlightService,
+    bookmarkService: bookmarkService,
+  );
   IntentHandler.init();
 
   runApp(
@@ -40,15 +54,23 @@ void main() async {
         ChangeNotifierProvider(
           create: (_) => SettingsProvider(settingsService),
         ),
+        ChangeNotifierProvider(
+          create: (_) => FavoritesProvider(settingsService),
+        ),
         ChangeNotifierProvider(create: (_) => TagProvider(tagService)),
         ChangeNotifierProvider(create: (_) => SortSearchProvider()),
         ChangeNotifierProvider(create: (_) => RecentFilesProvider()),
         ChangeNotifierProvider(create: (_) => ScannedPathsProvider()),
         ChangeNotifierProvider(create: (_) => FileOperationsProvider()),
         ChangeNotifierProvider(
-          create: (_) => HighlightProvider(HighlightService(prefs)),
+          create: (_) => HighlightProvider(highlightService),
         ),
+        ChangeNotifierProvider(
+          create: (_) => BookmarkProvider(bookmarkService),
+        ),
+        ChangeNotifierProvider(create: (_) => BackupProvider(backupService)),
         ChangeNotifierProvider(create: (_) => AppState()),
+        ChangeNotifierProvider(create: (_) => SelectionProvider()),
       ],
       child: const FeyaPdfApp(),
     ),

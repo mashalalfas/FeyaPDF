@@ -119,7 +119,7 @@ void main() {
     // Act: setLastReadPage('/path/to/file.pdf', 42) then getLastReadPage
     // Assert: returns 42
     test('setLastReadPage persists and getLastReadPage retrieves it', () async {
-      await service.setLastReadPage('/path/to/file.pdf', 42);
+      await service.setLastReadPage('/path/to/file.pdf', 42, 100);
       expect(service.getLastReadPage('/path/to/file.pdf'), equals(42));
     });
 
@@ -127,8 +127,8 @@ void main() {
     // Act: setLastReadPage('/path/a.pdf', 10) then setLastReadPage('/path/a.pdf', 25)
     // Assert: getLastReadPage returns 25 (updated value)
     test('setLastReadPage updates existing entry', () async {
-      await service.setLastReadPage('/path/a.pdf', 10);
-      await service.setLastReadPage('/path/a.pdf', 25);
+      await service.setLastReadPage('/path/a.pdf', 10, 100);
+      await service.setLastReadPage('/path/a.pdf', 25, 100);
       expect(service.getLastReadPage('/path/a.pdf'), equals(25));
     });
 
@@ -136,9 +136,9 @@ void main() {
     // Act: setLastReadPage for three different file paths
     // Assert: each path returns its own stored page number
     test('setLastReadPage handles multiple files independently', () async {
-      await service.setLastReadPage('/a.pdf', 5);
-      await service.setLastReadPage('/b.pdf', 15);
-      await service.setLastReadPage('/c.pdf', 99);
+      await service.setLastReadPage('/a.pdf', 5, 100);
+      await service.setLastReadPage('/b.pdf', 15, 200);
+      await service.setLastReadPage('/c.pdf', 99, 300);
       expect(service.getLastReadPage('/a.pdf'), equals(5));
       expect(service.getLastReadPage('/b.pdf'), equals(15));
       expect(service.getLastReadPage('/c.pdf'), equals(99));
@@ -187,7 +187,7 @@ void main() {
     test('multiple settings can be set and read independently', () async {
       await service.setThemeMode('dark');
       await service.setAutoEncrypt(true);
-      await service.setLastReadPage('/doc.pdf', 7);
+      await service.setLastReadPage('/doc.pdf', 7, 100);
 
       expect(service.themeMode, equals('dark'));
       expect(service.autoEncrypt, isTrue);

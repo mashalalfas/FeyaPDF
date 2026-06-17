@@ -152,6 +152,13 @@ class TagProvider extends ChangeNotifier {
     await setFileTags(filePath, current);
   }
 
+  /// Reload tags and file→tag map from persistent storage.
+  Future<void> reload() async {
+    _tags = _service.getAllTags();
+    _fileTagMap = _service.getFileTagMap();
+    notifyListeners();
+  }
+
   /// Drop the mapping for [filePath] entirely (e.g. on file deletion).
   Future<void> forgetFile(String filePath) async {
     if (_fileTagMap.remove(filePath) != null) {

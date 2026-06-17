@@ -3,12 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import '../providers/app_state.dart';
+import '../providers/bookmark_provider.dart';
 import '../providers/encryption_provider.dart';
+import '../providers/favorites_provider.dart';
 import '../providers/tag_provider.dart';
 import '../providers/sort_search_provider.dart';
+import '../providers/selection_provider.dart';
 import '../providers/file_operations_provider.dart';
 import '../providers/recent_files_provider.dart';
 import '../providers/scanned_paths_provider.dart';
+import '../providers/settings_provider.dart';
 import '../models/pdf_file.dart';
 import '../widgets/file_list_tile.dart';
 import '../widgets/tag_chip.dart';
@@ -18,6 +22,7 @@ import '../widgets/passphrase_dialog.dart';
 import '../widgets/secure_folder_card.dart';
 import '../services/permission_service.dart';
 import '../services/intent_handler.dart';
+import '../services/secure_folder_service.dart';
 import 'viewer_screen.dart';
 import 'settings_screen.dart';
 import 'tags_screen.dart';
@@ -150,6 +155,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     if (success) {
       // Clean up tag mapping for the deleted file.
       await tagProvider.forgetFile(file.path);
+      // Clean up bookmarks for the deleted file.
+      if (context.mounted) {
+        context.read<BookmarkProvider>().forgetFile(file.path);
+      }
     }
     if (mounted && success) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -189,13 +198,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     await showTagPickerDialog(context, filePath: file.path);
   }
 
-  /// Apply tag filter and search together. AppState handles search + sort;
-  /// the tag filter is applied on top in this widget.
-  List<PdfFile> _filteredFiles(AppState appState, TagProvider tagProvider) {
-    final files = appState.files;
+  /// Apply tag filter and favorites-first sort on top of appState files.
+  List<PdfFile> _filteredFiles(
+    AppState appState,
+    TagProvider tagProvider, {
+    Set<String>? favoritePaths,
+  }) {
+    final sorted = appState.sortedFiles(favoritePaths: favoritePaths);
     final activeTagId = tagProvider.activeFilterTagId;
-    if (activeTagId == null) return files;
-    return files
+    if (activeTagId == null) return sorted;
+    return sorted
         .where((f) => tagProvider.fileHasTag(f.path, activeTagId))
         .toList(growable: false);
   }
@@ -204,7 +216,26 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
     final tagProvider = context.watch<TagProvider>();
+    final selectionProvider = context.watch<SelectionProvider>();
+    final encryptionProvider = context.watch<EncryptionProvider>();
     final colorScheme = Theme.of(context).colorScheme;
+
+    if (selectionProvider.isSelectionMode) {
+      return Scaffold(
+        appBar: _selectionAppBar(selectionProvider, encryptionProvider, colorScheme),
+        body: _buildBody(
+          appState,
+          context.read<SortSearchProvider>(),
+          context.watch<BookmarkProvider>(),
+          context.watch<FavoritesProvider>(),
+          context.watch<SettingsProvider>(),
+          tagProvider,
+          colorScheme,
+          selectionProvider: selectionProvider,
+        ),
+        floatingActionButton: null,
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -254,25 +285,50 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               });
             },
           ),
-          PopupMenuButton<SortBy>(
+          PopupMenuButton<dynamic>(
             icon: const Icon(Icons.sort_rounded, size: 20),
             tooltip: 'Sort',
-            onSelected: (sortBy) {
-              final sortSearch = context.read<SortSearchProvider>();
-              if (sortSearch.sortBy == sortBy) {
-                sortSearch.sortOrder = sortSearch.sortOrder == SortOrder.asc
-                    ? SortOrder.desc
-                    : SortOrder.asc;
-              } else {
-                sortSearch.sortBy = sortBy;
-                sortSearch.sortOrder = SortOrder.desc;
+            onSelected: (value) {
+              if (value is SortBy) {
+                final sortSearch = context.read<SortSearchProvider>();
+                if (sortSearch.sortBy == value) {
+                  sortSearch.sortOrder = sortSearch.sortOrder == SortOrder.asc
+                      ? SortOrder.desc
+                      : SortOrder.asc;
+                } else {
+                  sortSearch.sortBy = value;
+                  sortSearch.sortOrder = SortOrder.desc;
+                }
+              } else if (value == 'favorites_first') {
+                context.read<SortSearchProvider>().toggleFavoritesFirst();
               }
             },
-            itemBuilder: (_) => [
-              _sortItem(SortBy.name, Icons.sort_by_alpha_rounded, 'Name', context.read<SortSearchProvider>()),
-              _sortItem(SortBy.modified, Icons.access_time_rounded, 'Date', context.read<SortSearchProvider>()),
-              _sortItem(SortBy.size, Icons.data_usage_rounded, 'Size', context.read<SortSearchProvider>()),
-            ],
+            itemBuilder: (_) {
+              final sortSearch = context.read<SortSearchProvider>();
+              return [
+                _sortItem(SortBy.name, Icons.sort_by_alpha_rounded, 'Name', sortSearch),
+                _sortItem(SortBy.modified, Icons.access_time_rounded, 'Date', sortSearch),
+                _sortItem(SortBy.size, Icons.data_usage_rounded, 'Size', sortSearch),
+                const PopupMenuDivider(),
+                CheckedPopupMenuItem(
+                  value: 'favorites_first',
+                  checked: sortSearch.showFavoritesFirst,
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.star_rounded,
+                        size: 18,
+                        color: sortSearch.showFavoritesFirst
+                            ? Colors.amber
+                            : null,
+                      ),
+                      const SizedBox(width: 10),
+                      const Text('Favorites first'),
+                    ],
+                  ),
+                ),
+              ];
+            },
           ),
           IconButton(
             icon: Icon(
@@ -297,7 +353,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           ),
         ],
       ),
-      body: _buildBody(appState, context.read<SortSearchProvider>(), tagProvider, colorScheme),
+      body: _buildBody(
+        appState,
+        context.read<SortSearchProvider>(),
+        context.watch<BookmarkProvider>(),
+        context.watch<FavoritesProvider>(),
+        context.watch<SettingsProvider>(),
+        tagProvider,
+        colorScheme,
+        selectionProvider: null,
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _pickDirectory,
         tooltip: 'Open folder',
@@ -309,9 +374,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget _buildBody(
     AppState appState,
     SortSearchProvider sortSearch,
+    BookmarkProvider bookmarkProvider,
+    FavoritesProvider favoritesProvider,
+    SettingsProvider settingsProvider,
     TagProvider tagProvider,
-    ColorScheme colorScheme,
-  ) {
+    ColorScheme colorScheme, {
+    SelectionProvider? selectionProvider,
+  }) {
     if (appState.isLoading) {
       return Center(
         child: Column(
@@ -392,7 +461,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       );
     }
 
-    final files = _filteredFiles(appState, tagProvider);
+    final favoritePaths = favoritesProvider.getFavorites();
+    final files = _filteredFiles(appState, tagProvider, favoritePaths: favoritePaths);
     return RefreshIndicator(
       onRefresh: () async {
         await appState.refresh();
@@ -430,7 +500,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             ),
                           );
                         },
-                        child: _buildFileTile(file, appState, tagProvider),
+                        child: _buildFileTile(
+                          file,
+                          appState,
+                          bookmarkProvider,
+                          favoritesProvider,
+                          settingsProvider,
+                          tagProvider,
+                          selectionProvider: selectionProvider,
+                        ),
                       );
                     },
                   ),
@@ -474,25 +552,63 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget _buildFileTile(
     PdfFile file,
     AppState appState,
-    TagProvider tagProvider,
-  ) {
+    BookmarkProvider bookmarkProvider,
+    FavoritesProvider favoritesProvider,
+    SettingsProvider settingsProvider,
+    TagProvider tagProvider, {
+    SelectionProvider? selectionProvider,
+  }) {
     // Decorate the file with its current tag IDs from the provider.
     final tagsForFile = tagProvider.getResolvedTagsForFile(file.path);
     final decorated = file.copyWith(
       tagIds: tagsForFile.map((t) => t.id).toList(growable: false),
     );
 
+    // Bookmark count for this file
+    final bookmarkCount = bookmarkProvider.allBookmarks
+        .where((b) => b.filePath == file.path)
+        .length;
+
+    // Reading progress
+    double? progressValue;
+    final progress = settingsProvider.getLastReadProgress(file.path);
+    if (progress != null && progress.totalPages > 0) {
+      progressValue = (progress.page / progress.totalPages).clamp(0.0, 1.0);
+    }
+
+    // Favorite status
+    final isFav = favoritesProvider.isFavorite(file.path);
+
+    final inSelectionMode = selectionProvider != null && selectionProvider.isSelectionMode;
+    final fileSelected = selectionProvider?.isSelected(file.path) ?? false;
+
     return Stack(
       children: [
         FileListTile(
           file: decorated,
           tags: tagsForFile,
-          isSelected: appState.selectedFile?.path == file.path,
-          onTap: () => _openFile(decorated),
+          isSelected: inSelectionMode ? fileSelected : appState.selectedFile?.path == file.path,
+          isSelectionMode: inSelectionMode,
+          onSelectToggle: selectionProvider != null
+              ? () => selectionProvider.toggleSelection(file.path)
+              : null,
+          onTap: inSelectionMode
+              ? () => selectionProvider.toggleSelection(file.path)
+              : () => _openFile(decorated),
           onDelete: () => _deleteFile(decorated),
           onShare: () => _shareFile(decorated),
           onEncrypt: file.isEncrypted ? null : () => _encryptFile(decorated),
+          onEnterSelectionMode: selectionProvider != null && !inSelectionMode
+              ? () {
+                  selectionProvider.enterSelectionMode();
+                  selectionProvider.toggleSelection(file.path);
+                }
+              : null,
           onTag: () => _tagFile(decorated),
+          bookmarkCount: bookmarkCount,
+          progressValue: progressValue,
+          isFavorite: isFav,
+          onToggleFavorite: () => favoritesProvider.toggleFavorite(file.path),
         ),
         if (file.isEncrypted)
           Positioned(
@@ -504,7 +620,198 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  PopupMenuItem<SortBy> _sortItem(
+  // ---------------------------------------------------------------------------
+  // Selection mode AppBar
+  // ---------------------------------------------------------------------------
+
+  PreferredSizeWidget _selectionAppBar(
+    SelectionProvider selectionProvider,
+    EncryptionProvider encryptionProvider,
+    ColorScheme colorScheme,
+  ) {
+    return AppBar(
+      leading: IconButton(
+        icon: const Icon(Icons.close_rounded),
+        tooltip: 'Exit selection mode',
+        onPressed: () => selectionProvider.exitSelectionMode(),
+      ),
+      title: Text('${selectionProvider.selectedCount} selected'),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.label_outline_rounded, size: 20),
+          tooltip: 'Tag selected',
+          onPressed: () => _batchTag(selectionProvider.selectedPaths.toList()),
+        ),
+        if (encryptionProvider.hasPassphrase)
+          IconButton(
+            icon: const Icon(Icons.lock_outline_rounded, size: 20),
+            tooltip: 'Encrypt selected',
+            onPressed: () => _batchEncrypt(selectionProvider.selectedPaths.toList()),
+          ),
+        IconButton(
+          icon: const Icon(Icons.share_rounded, size: 20),
+          tooltip: 'Share selected',
+          onPressed: () => _batchShare(selectionProvider.selectedPaths.toList()),
+        ),
+        IconButton(
+          icon: Icon(Icons.delete_outline_rounded, size: 20, color: colorScheme.error),
+          tooltip: 'Delete selected',
+          onPressed: () => _batchDelete(selectionProvider.selectedPaths.toList()),
+        ),
+        PopupMenuButton<String>(
+          tooltip: 'More',
+          onSelected: (value) {
+            if (value == 'secure_folder') {
+              _batchMoveToSecureFolder(selectionProvider.selectedPaths.toList());
+            }
+          },
+          itemBuilder: (_) => [
+            const PopupMenuItem(
+              value: 'secure_folder',
+              child: Row(
+                children: [
+                  Icon(Icons.shield_outlined, size: 18),
+                  SizedBox(width: 10),
+                  Text('Move to Secure Folder'),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Batch operations
+  // ---------------------------------------------------------------------------
+
+  Future<void> _batchDelete(List<String> paths) async {
+    if (paths.isEmpty) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Delete ${paths.length} files?'),
+        content: Text('$paths files will be permanently deleted.\nThis cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    // ignore: use_build_context_synchronously
+    final fileOps = context.read<FileOperationsProvider>();
+    final bookmarkProvider = context.read<BookmarkProvider>();
+    final count = await fileOps.batchDelete(paths);
+    // Clean up bookmarks for deleted files
+    for (final path in paths) {
+      bookmarkProvider.forgetFile(path);
+    }
+    // ignore: use_build_context_synchronously
+    context.read<SelectionProvider>().exitSelectionMode();
+    if (mounted) {
+      // Refresh app state
+      // ignore: use_build_context_synchronously
+      context.read<AppState>().refresh();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$count file${count == 1 ? '' : 's'} deleted'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+    }
+  }
+
+  Future<void> _batchShare(List<String> paths) async {
+    if (paths.isEmpty) return;
+    final fileOps = context.read<FileOperationsProvider>();
+    await fileOps.batchShare(paths);
+    if (mounted) {
+      context.read<SelectionProvider>().exitSelectionMode();
+    }
+  }
+
+  Future<void> _batchTag(List<String> paths) async {
+    if (paths.isEmpty) return;
+    // Use the tag picker on the first file. After the dialog,
+    // copy the chosen tags to all other selected files.
+    final firstPath = paths.first;
+    final changed = await showTagPickerDialog(context, filePath: firstPath);
+    if (changed == true && mounted && paths.length > 1) {
+      final tagProvider = context.read<TagProvider>();
+      final chosenIds = tagProvider.getTagsForFile(firstPath);
+      for (final path in paths.skip(1)) {
+        await tagProvider.setFileTags(path, chosenIds);
+      }
+    }
+    if (mounted) {
+      context.read<SelectionProvider>().exitSelectionMode();
+    }
+  }
+
+  Future<void> _batchEncrypt(List<String> paths) async {
+    if (paths.isEmpty) return;
+    final encryption = context.read<EncryptionProvider>();
+    if (!encryption.hasPassphrase) {
+      final set = await showPassphraseDialog(context);
+      if (!set || !mounted) return;
+    }
+    final fileOps = context.read<FileOperationsProvider>();
+    final encrypted = await fileOps.batchEncrypt(paths);
+    if (mounted) {
+      context.read<SelectionProvider>().exitSelectionMode();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${encrypted.length} file${encrypted.length == 1 ? '' : 's'} encrypted'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+    }
+  }
+
+  Future<void> _batchMoveToSecureFolder(List<String> paths) async {
+    if (paths.isEmpty) return;
+    final encryption = context.read<EncryptionProvider>();
+    if (!encryption.hasPassphrase || encryption.passphrase == null) {
+      final set = await showPassphraseDialog(context);
+      if (!set || !mounted) return;
+    }
+    if (!mounted) return;
+    var successCount = 0;
+    for (final path in paths) {
+      try {
+        await SecureFolderService.importFile(path, encryption.passphrase!);
+        successCount++;
+      } catch (_) {
+        // Skip files that can't be moved
+      }
+    }
+    // ignore: use_build_context_synchronously
+    context.read<SelectionProvider>().exitSelectionMode();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$successCount file${successCount == 1 ? '' : 's'} moved to secure folder'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+    }
+  }
+
+  PopupMenuItem<dynamic> _sortItem(
     SortBy value,
     IconData icon,
     String label,

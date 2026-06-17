@@ -28,8 +28,11 @@ class SettingsProvider extends ChangeNotifier {
 
   int? getLastReadPage(String path) => _service.getLastReadPage(path);
 
-  Future<void> setLastReadPage(String path, int page) =>
-      _service.setLastReadPage(path, page);
+  ({int page, int totalPages})? getLastReadProgress(String path) =>
+      _service.getLastReadProgress(path);
+
+  Future<void> setLastReadPage(String path, int page, {int totalPages = 0}) =>
+      _service.setLastReadPage(path, page, totalPages);
 
   void _init() {
     _themeMode = _themeModeFromString(_service.themeMode);

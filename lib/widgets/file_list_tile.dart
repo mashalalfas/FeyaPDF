@@ -12,6 +12,13 @@ class FileListTile extends StatelessWidget {
   final VoidCallback? onShare;
   final VoidCallback? onEncrypt;
   final VoidCallback? onTag;
+  final int? bookmarkCount;
+  final double? progressValue;
+  final bool isFavorite;
+  final VoidCallback? onToggleFavorite;
+  final bool isSelectionMode;
+  final VoidCallback? onSelectToggle;
+  final VoidCallback? onEnterSelectionMode; // overrides context menu when set
 
   const FileListTile({
     super.key,
@@ -23,6 +30,13 @@ class FileListTile extends StatelessWidget {
     this.onShare,
     this.onEncrypt,
     this.onTag,
+    this.bookmarkCount,
+    this.progressValue,
+    this.isFavorite = false,
+    this.onToggleFavorite,
+    this.isSelectionMode = false,
+    this.onSelectToggle,
+    this.onEnterSelectionMode,
   });
 
   @override
@@ -38,28 +52,39 @@ class FileListTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         child: InkWell(
           borderRadius: BorderRadius.circular(10),
-          onTap: onTap,
-          onLongPress: () => _showContextMenu(context),
+          onTap: isSelectionMode ? onSelectToggle : onTap,
+          onLongPress: onEnterSelectionMode ?? (isSelectionMode ? null : () => _showContextMenu(context)),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             child: Row(
               children: [
-                Hero(
-                  tag: 'file-icon-${file.path}',
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: colorScheme.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
+                if (isSelectionMode)
+                  Checkbox(
+                    value: isSelected,
+                    onChanged: (_) => onSelectToggle?.call(),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    visualDensity: VisualDensity.compact,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
                     ),
-                    child: Icon(
-                      isSelected ? Icons.picture_as_pdf_rounded : Icons.description_outlined,
-                      size: 20,
-                      color: colorScheme.primary,
+                  )
+                else
+                  Hero(
+                    tag: 'file-icon-${file.path}',
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        isSelected ? Icons.picture_as_pdf_rounded : Icons.description_outlined,
+                        size: 20,
+                        color: colorScheme.primary,
+                      ),
                     ),
                   ),
-                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -107,17 +132,70 @@ class FileListTile extends StatelessWidget {
                           ),
                         ],
                       ),
+                      if (progressValue != null) ...[
+                        const SizedBox(height: 6),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(1.5),
+                          child: LinearProgressIndicator(
+                            value: progressValue,
+                            minHeight: 3,
+                            backgroundColor: colorScheme.primary.withValues(alpha: 0.08),
+                            valueColor: AlwaysStoppedAnimation(colorScheme.primary),
+                          ),
+                        ),
+                      ],
                       if (tags.isNotEmpty) ...[
                         const SizedBox(height: 6),
                         _TagRow(tags: tags),
                       ],
+                      if ((bookmarkCount ?? 0) > 0) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.bookmark_rounded,
+                              size: 11,
+                              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              '${bookmarkCount ?? 0}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: 20,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    if (onToggleFavorite != null && !isSelectionMode)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 2),
+                        child: GestureDetector(
+                          onTap: onToggleFavorite,
+                          child: Icon(
+                            isFavorite ? Icons.star_rounded : Icons.star_border_rounded,
+                            size: 18,
+                            color: isFavorite
+                                ? Colors.amber
+                                : colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                          ),
+                        ),
+                      ),
+                    if (!isSelectionMode)
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        size: 20,
+                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                      ),
+                  ],
                 ),
               ],
             ),

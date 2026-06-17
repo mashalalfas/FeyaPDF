@@ -1,10 +1,10 @@
-# Feya_PDF — SMI Index
+# FeyaPDF — SMI Index
 
 ## Project Info
 - **Name:** Feya PDF
 - **Stack:** Flutter/Dart, Android
-- **Location:** ~/Development/Feya_PDF/
-- **Status:** Active — v1.1
+- **Location:** ~/Development/FeyaPDF/
+- **Status:** Active — v1.2
 - **Created:** 2026-06-03
 
 ## Milestones
@@ -21,12 +21,29 @@
 - APK: 52.5MB
 - GDrive: https://drive.google.com/open?id=1fwXx8yA-A5K4UfIBb_QZdTjuZsd24bLg
 
+### #2 — Phase 2 (2026-06-17, commit `0c4edbf`)
+- Full PDF text search engine with result navigation (find next/previous)
+- Dark mode theme for night reading
+- Thumbnail grid for visual page overview
+- Text selection and copy from PDF pages
+- Bottom navigation bar redesign
+- PDF outline/TOC sidebar
+- Continuous scroll mode
+- Passphrase strength indicator
+
+### #3 — Phase 3 (2026-06-17, commit `464afe4`)
+- **Text highlighting** with persistence — create, view, delete highlights per document
+- **Biometric unlock** — face, fingerprint, iris authentication
+- **App lock** — PIN-based lock screen with biometric fallback
+- 42 new tests (17 highlight + 8 biometric + 17 app lock)
+- 19 files, 3,017 additions, 0 analyze issues
+
 ## Architecture
-- **Models:** PdfFile, Tag, UserProfile
-- **Services:** FileService, EncryptionService, SettingsService, TagService, PermissionService, IntentHandler
-- **Providers:** AppState, EncryptionProvider, SettingsProvider, TagProvider
+- **Models:** PdfFile, Tag, UserProfile, HighlightData
+- **Services:** FileService, EncryptionService, SettingsService, TagService, PermissionService, IntentHandler, HighlightService, AppLockService, BiometricAuthService
+- **Providers:** AppState, EncryptionProvider, SettingsProvider, TagProvider, HighlightProvider
 - **Screens:** HomeScreen, ViewerScreen, SettingsScreen, TagsScreen
-- **Widgets:** FileListTile, EncryptionBadge, PassphraseDialog, TagChip, TagPickerDialog, LottieRoute
+- **Widgets:** FileListTile, EncryptionBadge, PassphraseDialog, TagChip, TagPickerDialog, LottieRoute, AppLockScreen, BiometricUnlockDialog, HighlightsPanel
 
 ## Design Language
 - Teal #00897B primary, amber secondary
@@ -40,9 +57,11 @@
 - encrypt, pointycastle (AES-256-GCM encryption)
 - shared_preferences (persistence)
 - permission_handler, device_info_plus (permissions)
-- pdfx (PDF rendering)
+- pdfrx (PDF rendering)
 - share_plus (file sharing)
 - file_picker, path_provider, lottie
+- local_auth (biometric authentication)
+- flutter_secure_storage (secure credential storage)
 
 ## Lessons Learned
 - Army protocol: max 2-3 files per soldier, decompose before spawning

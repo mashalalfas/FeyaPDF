@@ -107,6 +107,79 @@ class FileOperationsProvider extends ChangeNotifier {
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // Batch operations
+  // ---------------------------------------------------------------------------
+
+  /// Delete multiple files. Returns count of successful deletions.
+  Future<int> batchDelete(List<String> paths) async {
+    var count = 0;
+    for (final path in paths) {
+      try {
+        final file = File(path);
+        if (await file.exists()) {
+          await file.delete();
+          count++;
+        }
+      } catch (_) {
+        // Skip files that can't be deleted
+      }
+    }
+    if (count > 0) notifyListeners();
+    return count;
+  }
+
+  /// Encrypt multiple files. Returns list of paths that were successfully encrypted.
+  Future<List<String>> batchEncrypt(List<String> paths) async {
+    if (_encryptionProvider == null) return [];
+    final encrypted = <String>[];
+    for (final path in paths) {
+      try {
+        final encPath = await _encryptionProvider!.encryptFile(path);
+        encrypted.add(encPath);
+      } catch (_) {
+        // Skip files that can't be encrypted
+      }
+    }
+    if (encrypted.isNotEmpty) notifyListeners();
+    return encrypted;
+  }
+
+  /// Share multiple files via share_plus.
+  Future<void> batchShare(List<String> paths) async {
+    if (paths.isEmpty) return;
+    try {
+      final xFiles = <XFile>[];
+      for (final path in paths) {
+        final file = File(path);
+        if (await file.exists()) {
+          // For encrypted files, share the decrypted PDF
+          if (path.endsWith('.pdf.enc') && _encryptionProvider != null) {
+            final bytes = await _encryptionProvider!.decryptFile(path);
+            final dir = await getTemporaryDirectory();
+            final fileName = path.split('/').last;
+            final pdfName = fileName.endsWith('.pdf.enc')
+                ? fileName.substring(0, fileName.length - 4)
+                : fileName;
+            final tempFile = File('${dir.path}/$pdfName');
+            await tempFile.writeAsBytes(bytes);
+            xFiles.add(XFile(tempFile.path, mimeType: 'application/pdf'));
+          } else {
+            xFiles.add(XFile(path, mimeType: 'application/pdf'));
+          }
+        }
+      }
+      if (xFiles.isNotEmpty) {
+        final text = paths.length == 1
+            ? paths.first.split('/').last
+            : '${paths.length} PDFs';
+        await Share.shareXFiles(xFiles, text: text);
+      }
+    } catch (_) {
+      // Caller handles error display
+    }
+  }
+
   /// Save a file to a target directory, or the app's local documents FeyaPDF
   /// folder if [targetDir] is null.
   /// Returns a [SaveResult] indicating success, alreadyExists, or failure.

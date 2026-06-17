@@ -35,8 +35,16 @@ class AppState extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  List<PdfFile> get files {
+    List<PdfFile> get files {
     if (_sortSearchProvider != null) return _sortSearchProvider!.apply(_files);
+    return List<PdfFile>.from(_files);
+  }
+
+  /// Sorted files with optional favorites-first support.
+  List<PdfFile> sortedFiles({Set<String>? favoritePaths}) {
+    if (_sortSearchProvider != null) {
+      return _sortSearchProvider!.apply(_files, favoritePaths: favoritePaths);
+    }
     return List<PdfFile>.from(_files);
   }
 

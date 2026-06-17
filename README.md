@@ -1,6 +1,6 @@
 # Feya PDF
 
-A clean, fast, ad-free PDF reader for Android with E2E encryption and annotation support.
+A clean, fast, ad-free PDF reader for Android with E2E encryption, annotation support, and privacy features.
 
 ## Features
 
@@ -8,7 +8,17 @@ A clean, fast, ad-free PDF reader for Android with E2E encryption and annotation
 - **E2E encryption** — AES-256-GCM, PBKDF2 key derivation, .pdf.enc format
 - **Secure folder** — dedicated encrypted directory for sensitive files
 - **Tag system** — 8-color palette, filter bar, management screen
+- **Text highlighting** — persistent highlights per document, full CRUD with color picker
+- **App lock** — PIN-based lock screen with biometric fallback
+- **Biometric unlock** — face, fingerprint, and iris authentication via local_auth
+- **Text search** — full PDF text search with result navigation (find next/previous)
+- **Dark mode** — system-aware and manual toggle for night reading
+- **Thumbnail grid** — visual page overview for quick navigation
+- **Text selection** — select and copy text from PDF pages
 - **SVG preview** — vector file support via flutter_svg
+- **Outline/TOC** — PDF table of contents sidebar for document structure
+- **Continuous scroll** — alternative to page-by-page reading
+- **Passphrase strength** — visual indicator when unlocking encrypted docs
 - **File management** — sort by name/date/size, search, save-to-directory
 - **Recent files** — quick access to last 5 opened files
 - **Multi-folder scanning** — recursive PDF discovery with Isolate
@@ -20,7 +30,8 @@ A clean, fast, ad-free PDF reader for Android with E2E encryption and annotation
 - **State management:** Provider
 - **PDF rendering:** pdfrx (native annotations)
 - **Encryption:** AES-256-GCM (encrypt package + pointycastle)
-- **Storage:** SharedPreferences
+- **Storage:** SharedPreferences, FlutterSecureStorage
+- **Biometrics:** local_auth
 - **SVG:** flutter_svg
 - **CI:** GitHub Actions (analyze + test on push/PR)
 
@@ -28,13 +39,22 @@ A clean, fast, ad-free PDF reader for Android with E2E encryption and annotation
 
 | Layer | Count | What |
 |-------|-------|------|
-| Unit (small) | 4 files | Encryption, file, tag, settings services |
-| Integration (medium) | 3 files | AppState, TagProvider, FileOperations |
-| Widget (large) | 2 files | App root, viewer screen states |
+| Unit (small) | 6 files | Encryption, file, tag, settings, highlight, app lock services |
+| Integration (medium) | 5 files | AppState, TagProvider, FileOperations, HighlightProvider, BiometricAuth |
+| Widget (large) | 4 files | App root, viewer screen states, app lock screen, biometric unlock dialog |
 
-Total: 99 test cases across 9 files. 3-layer addyosmani pyramid.
+Total: **265 test cases** across 15 files. 3-layer addyosmani pyramid.
 
 `dart analyze` → 0 issues
+
+### Test breakdown by feature
+
+| Feature | Tests | Files |
+|---------|-------|-------|
+| Highlight | 17 | 1 |
+| Biometric Auth | 8 | 1 |
+| App Lock | 17 | 1 |
+| Core (Phase 1–2) | 223 | 12 |
 
 ## Build
 

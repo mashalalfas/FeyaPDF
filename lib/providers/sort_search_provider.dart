@@ -8,10 +8,12 @@ class SortSearchProvider extends ChangeNotifier {
   SortBy _sortBy = SortBy.modified;
   SortOrder _sortOrder = SortOrder.desc;
   String _searchQuery = '';
+  bool _favoritesFirst = false;
 
   SortBy get sortBy => _sortBy;
   SortOrder get sortOrder => _sortOrder;
   String get searchQuery => _searchQuery;
+  bool get showFavoritesFirst => _favoritesFirst;
 
   set sortBy(SortBy value) {
     _sortBy = value;
@@ -28,11 +30,23 @@ class SortSearchProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  List<PdfFile> apply(List<PdfFile> files) {
+  void toggleFavoritesFirst() {
+    _favoritesFirst = !_favoritesFirst;
+    notifyListeners();
+  }
+
+  List<PdfFile> apply(List<PdfFile> files, {Set<String>? favoritePaths}) {
     var sorted = List<PdfFile>.from(files);
 
-    // Apply sorting
+    // Apply sorting with favorites-first option
     sorted.sort((a, b) {
+      // Favorites first
+      if (_favoritesFirst && favoritePaths != null) {
+        final aFav = favoritePaths.contains(a.path);
+        final bFav = favoritePaths.contains(b.path);
+        if (aFav != bFav) return aFav ? -1 : 1;
+      }
+      // Primary sort
       int cmp;
       switch (_sortBy) {
         case SortBy.name:

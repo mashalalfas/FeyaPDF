@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../providers/backup_provider.dart';
 import '../providers/encryption_provider.dart';
 import '../providers/settings_provider.dart';
 import '../services/app_lock_service.dart';
@@ -185,6 +186,67 @@ class SettingsScreen extends StatelessWidget {
             ),
             trailing: const Icon(Icons.chevron_right_rounded),
             onTap: () => _showThemePicker(context, settings),
+          ),
+
+          const SizedBox(height: 8),
+
+          // ── Backup & Restore Section ──
+          _SectionHeader('Backup & Restore'),
+          Consumer<BackupProvider>(
+            builder: (ctx, backup, _) => ListTile(
+              leading: const Icon(Icons.backup_rounded),
+              title: const Text('Export backup'),
+              subtitle: Text(
+                backup.isExporting
+                    ? 'Exporting…'
+                    : 'Save all data as a JSON file',
+                style: TextStyle(
+                  color: colorScheme.onSurfaceVariant,
+                  fontSize: 13,
+                ),
+              ),
+              trailing: backup.isExporting
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: colorScheme.primary,
+                      ),
+                    )
+                  : const Icon(Icons.chevron_right_rounded),
+              onTap: backup.isExporting
+                  ? null
+                  : () => backup.exportBackup(ctx),
+            ),
+          ),
+          Consumer<BackupProvider>(
+            builder: (ctx, backup, _) => ListTile(
+              leading: const Icon(Icons.restore_rounded),
+              title: const Text('Import backup'),
+              subtitle: Text(
+                backup.isImporting
+                    ? 'Restoring…'
+                    : 'Restore data from a JSON file',
+                style: TextStyle(
+                  color: colorScheme.onSurfaceVariant,
+                  fontSize: 13,
+                ),
+              ),
+              trailing: backup.isImporting
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: colorScheme.primary,
+                      ),
+                    )
+                  : const Icon(Icons.chevron_right_rounded),
+              onTap: backup.isImporting
+                  ? null
+                  : () => backup.importBackup(ctx),
+            ),
           ),
 
           const SizedBox(height: 8),

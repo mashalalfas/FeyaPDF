@@ -14,6 +14,9 @@ import '../widgets/thumbnail_grid.dart';
 import '../widgets/highlights_panel.dart';
 import '../providers/highlight_provider.dart';
 import '../models/highlight.dart';
+import '../models/bookmark.dart';
+import '../providers/bookmark_provider.dart';
+import '../widgets/bookmarks_panel.dart';
 
 /// Color matrix that inverts all RGB channels (255 - value) while preserving alpha.
 /// Used by Dark Reading Mode to create a negative effect on the PDF canvas.
@@ -71,6 +74,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<HighlightProvider>().openFile(widget.file.path);
+        context.read<BookmarkProvider>().openFile(widget.file.path);
       }
     });
   }
@@ -212,6 +216,11 @@ class _ViewerScreenState extends State<ViewerScreen> {
         _totalPages = document.pages.length;
         _currentPage = controller.pageNumber ?? _currentPage;
       });
+      context.read<SettingsProvider>().setLastReadPage(
+        widget.file.path,
+        _currentPage,
+        totalPages: _totalPages,
+      );
     }
     // Attach the search provider to the viewer controller
     _searchProvider.attach(controller);
@@ -251,7 +260,11 @@ class _ViewerScreenState extends State<ViewerScreen> {
     }
     if (mounted) {
       setState(() => _currentPage = pageNumber);
-      context.read<SettingsProvider>().setLastReadPage(widget.file.path, pageNumber);
+      context.read<SettingsProvider>().setLastReadPage(
+        widget.file.path,
+        pageNumber,
+        totalPages: _totalPages,
+      );
     }
   }
 
@@ -628,6 +641,37 @@ class _ViewerScreenState extends State<ViewerScreen> {
                     .togglePanel();
               },
             ),
+          // Bookmark toggle button
+          if (!_isSvgFile && _totalPages > 0)
+            IconButton(
+              icon: Icon(
+                context.watch<BookmarkProvider>().fileBookmarks.any((b) => b.pageNumber == _currentPage)
+                    ? Icons.bookmark_rounded
+                    : Icons.bookmark_border_rounded,
+                size: 20,
+                color: context.watch<BookmarkProvider>().fileBookmarks.any((b) => b.pageNumber == _currentPage)
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+              ),
+              tooltip: context.watch<BookmarkProvider>().fileBookmarks.any((b) => b.pageNumber == _currentPage)
+                  ? 'Remove bookmark'
+                  : 'Bookmark this page',
+              onPressed: () async {
+                final provider = context.read<BookmarkProvider>();
+                final existing = provider.fileBookmarks.where((b) => b.pageNumber == _currentPage);
+                if (existing.isNotEmpty) {
+                  for (final b in existing) {
+                    await provider.removeBookmark(b.id);
+                  }
+                } else {
+                  await provider.addBookmark(Bookmark(
+                    filePath: widget.file.path,
+                    pageNumber: _currentPage,
+                    label: null,
+                  ));
+                }
+              },
+            ),
           // FEATURE 1: Save icon is always visible
           IconButton(
             icon: const Icon(Icons.save_alt_rounded, size: 20),
@@ -683,6 +727,25 @@ class _ViewerScreenState extends State<ViewerScreen> {
                       },
                       onClose: () => context
                           .read<HighlightProvider>()
+                          .setShowPanel(false),
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
+            child: context.watch<BookmarkProvider>().showPanel
+                ? SizedBox(
+                    height: 250,
+                    child: BookmarksPanel(
+                      onNavigateToPage: (page) {
+                        _pdfController?.goToPage(pageNumber: page);
+                        context.read<BookmarkProvider>().setShowPanel(false);
+                      },
+                      onClose: () => context
+                          .read<BookmarkProvider>()
                           .setShowPanel(false),
                     ),
                   )
@@ -1099,10 +1162,58 @@ class _ViewerScreenState extends State<ViewerScreen> {
                       onTapOutside: (_) => seekToPage(_pageSeekController.text),
                     ),
                   )
-                : GestureDetector(
-                    onTap: () {
-                      setState(() => _showPageSeek = true);
-                      _pageSeekController.text = '';
+                : PopupMenuButton<String>(
+                    onSelected: (value) {
+                      if (value == 'seek') {
+                        setState(() {
+                          _showPageSeek = true;
+                          _pageSeekController.text = '';
+                        });
+                      } else if (value == 'bookmark') {
+                        final provider = context.read<BookmarkProvider>();
+                        final existing = provider.fileBookmarks
+                            .where((b) => b.pageNumber == _currentPage);
+                        if (existing.isNotEmpty) {
+                          for (final b in existing) {
+                            provider.removeBookmark(b.id);
+                          }
+                        } else {
+                          provider.addBookmark(Bookmark(
+                            filePath: widget.file.path,
+                            pageNumber: _currentPage,
+                            label: null,
+                          ));
+                        }
+                      }
+                    },
+                    offset: const Offset(0, 40),
+                    itemBuilder: (context) {
+                      final isBookmarked = context
+                          .read<BookmarkProvider>()
+                          .fileBookmarks
+                          .any((b) => b.pageNumber == _currentPage);
+                      return [
+                        const PopupMenuItem(
+                          value: 'seek',
+                          child: ListTile(
+                            dense: true,
+                            leading: Icon(Icons.edit_rounded, size: 18),
+                            title: Text('Jump to page…'),
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
+                        if (!isBookmarked)
+                          const PopupMenuItem(
+                            value: 'bookmark',
+                            child: ListTile(
+                              dense: true,
+                              leading:
+                                  Icon(Icons.bookmark_border_rounded, size: 18),
+                              title: Text('Bookmark this page'),
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                      ];
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
@@ -1113,13 +1224,42 @@ class _ViewerScreenState extends State<ViewerScreen> {
                         color: colorScheme.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Text(
-                        '$_currentPage / $_totalPages',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: colorScheme.primary,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '$_currentPage / $_totalPages',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: colorScheme.primary,
+                            ),
+                          ),
+                          // Percentage (#24)
+                          Text(
+                            ' · ${(_currentPage / _totalPages * 100).round()}%',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                              color:
+                                  colorScheme.primary.withValues(alpha: 0.6),
+                            ),
+                          ),
+                          // Bookmark indicator (#08)
+                          if (context
+                              .watch<BookmarkProvider>()
+                              .fileBookmarks
+                              .any((b) => b.pageNumber == _currentPage))
+                            Padding(
+                              padding:
+                                  const EdgeInsets.only(left: 4),
+                              child: Icon(
+                                Icons.bookmark_rounded,
+                                size: 14,
+                                color: colorScheme.primary,
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ),
