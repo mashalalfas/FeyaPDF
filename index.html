@@ -1890,7 +1890,17 @@ body.ragnarok::after {
     </form>
   </dialog>
 
-  <script type="module">/* =====================================================================
+  <script type="importmap">
+{
+  "imports": {
+    "gsap": "https://cdn.jsdelivr.net/npm/gsap@3.12.5/+esm",
+    "gsap/ScrollTrigger": "https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js",
+    "lenis": "https://cdn.jsdelivr.net/npm/lenis@1.1.18/+esm",
+    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/+esm"
+  }
+}
+</script>
+<script type="module">/* =====================================================================
    Freya PDF — The Apprentice's Desk
    Main entry: Lenis smooth scroll, GSAP ScrollTrigger page turns,
    all interactions, easter eggs, search palette, zoom, etc.
