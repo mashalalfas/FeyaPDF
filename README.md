@@ -56,6 +56,13 @@ Total: **265 test cases** across 15 files. 3-layer addyosmani pyramid.
 | App Lock | 17 | 1 |
 | Core (Phase 1–2) | 223 | 12 |
 
+## Website
+
+The Feya PDF landing page lives in the HERO repo:
+
+- **Source:** `mashalalfas/hero/skills/web-designer/feya-website/index.html`
+- **Live:** https://mashalalfas.github.io/FeyaPDF/
+
 ## Build
 
 ```bash
