@@ -1,4237 +1,939 @@
-<!doctype html>
-<html lang="en" data-mode="paper">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#F5F0E8" />
-  <meta name="description" content="Feya PDF — Read carefully. Mark, discard, share. A modern PDF reader for Android." />
-  <meta name="keywords" content="PDF reader, Android, annotation, highlights, open-source, privacy" />
-  <meta property="og:title" content="Feya PDF — The Apprentice's Desk" />
-  <meta property="og:description" content="A quiet PDF reader for Android. No accounts. No ads. Just reading." />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Feya PDF — Illuminate what matters</title>
+  <meta name="description" content="Feya is a premium PDF reader. Read. Highlight. Secure. Illuminate what matters." />
+  <meta property="og:title" content="Feya PDF — Illuminate what matters" />
+  <meta property="og:description" content="A premium PDF reader for the curious mind." />
   <meta property="og:type" content="website" />
-  <title>Feya PDF — The Apprentice's Desk</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='6' y='6' width='4' height='4' fill='%23D4A373' transform='rotate(45 8 8)'/%3E%3C/svg%3E" />
 
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&family=Caveat:wght@400;600&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400&family=Playfair+Display:wght@300;400&display=swap"
     rel="stylesheet"
   />
 
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%237D8B6F'/%3E%3Ctext x='50%25' y='58%25' text-anchor='middle' font-family='serif' font-size='20' fill='%23F5F0E8'%3EF%3C/text%3E%3C/svg%3E" />
-
-  <style>/* =====================================================================
-   Freya PDF — The Apprentice's Desk
-   Design system, color tokens, typography, layout, components, print.
-   Premium upgrade: refined palette, micro-interactions, glassmorphism,
-   better mobile-first responsive, improved motion design.
-   ===================================================================== */
-
-/* ---------- Tokens ---------- */
-:root {
-  /* Palette — warmer, more intentional */
-  --bg: #F6F1E9;
-  --bg-2: #EDE5D3;
-  --bg-3: #E2D7BF;
-  --primary: #6B7F5E;
-  --primary-2: #5A6E4F;
-  --accent: #C4A962;
-  --accent-2: #A98F4D;
-  --accent-3: #D6BC7A;
-  --rust: #B85C38;
-  --rust-2: #9E4E2E;
-  --teal: #2A5B5C;
-  --teal-2: #1E4445;
-  --ink: #2C2416;
-  --ink-2: #4A3F2A;
-  --ink-3: #7A6E58;
-  --line: rgba(44, 36, 22, 0.10);
-  --line-strong: rgba(44, 36, 22, 0.20);
-  --paper-shadow: 0 1px 0 rgba(44, 36, 22, 0.04), 0 8px 24px -12px rgba(44, 36, 22, 0.20);
-  --paper-shadow-lg: 0 1px 0 rgba(44, 36, 22, 0.04), 0 20px 48px -16px rgba(44, 36, 22, 0.28);
-  --paper-shadow-xl: 0 1px 0 rgba(44, 36, 22, 0.04), 0 32px 64px -20px rgba(44, 36, 22, 0.32);
-
-  /* Type */
-  --font-serif: "Playfair Display", "Iowan Old Style", "Apple Garamond", Georgia, serif;
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-hand: "Caveat", "Comic Sans MS", cursive;
-
-  /* Geometry */
-  --radius: 6px;
-  --radius-lg: 12px;
-  --radius-xl: 20px;
-  --maxw: 1180px;
-  --pad-x: clamp(24px, 5vw, 72px);
-  --pad-y: clamp(64px, 10vh, 140px);
-  --section-h: 100vh;
-  --section-min-h: 680px;
-
-  /* Motion — refined easing curves */
-  --ease: cubic-bezier(0.7, 0, 0.3, 1);
-  --ease-out: cubic-bezier(0.2, 1, 0.3, 1);
-  --ease-spring: cubic-bezier(0.34, 1.3, 0.64, 1);
-  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
-
-  /* Grain */
-  --grain-opacity: 0.025;
-}
-
-[data-mode="dark"] {
-  --bg: #18160F;
-  --bg-2: #1F1C14;
-  --bg-3: #28231A;
-  --ink: #F2EAD8;
-  --ink-2: #CCC1A8;
-  --ink-3: #928770;
-  --primary: #9AAE8C;
-  --accent: #D6BC7A;
-  --accent-3: #E4CC8C;
-  --line: rgba(242, 234, 216, 0.08);
-  --line-strong: rgba(242, 234, 216, 0.16);
-  --paper-shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 12px 32px -16px rgba(0, 0, 0, 0.5);
-  --paper-shadow-lg: 0 1px 0 rgba(0, 0, 0, 0.3), 0 24px 56px -20px rgba(0, 0, 0, 0.6);
-  --paper-shadow-xl: 0 1px 0 rgba(0, 0, 0, 0.3), 0 36px 72px -24px rgba(0, 0, 0, 0.7);
-  --grain-opacity: 0.032;
-}
-
-/* ---------- Film grain overlay (SVG noise) ---------- */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 9999;
-  opacity: var(--grain-opacity);
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  mix-blend-mode: multiply;
-  animation: grainShift 1.6s steps(4) infinite;
-}
-[data-mode="dark"] body::before { mix-blend-mode: screen; }
-@keyframes grainShift {
-  0%   { transform: translate(0, 0); }
-  25%  { transform: translate(-1.5%, 0.5%); }
-  50%  { transform: translate(0.5%, -1.5%); }
-  75%  { transform: translate(-0.5%, 1%); }
-  100% { transform: translate(0, 0); }
-}
-
-/* ---------- Reset ---------- */
-*, *::before, *::after { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; }
-html { -webkit-text-size-adjust: 100%; scroll-behavior: auto; }
-body {
-  font-family: var(--font-sans);
-  color: var(--ink);
-  background: var(--bg);
-  line-height: 1.6;
-  font-size: 16px;
-  font-weight: 400;
-  overflow-x: hidden;
-  min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  transition: background-color 500ms var(--ease-smooth), color 500ms var(--ease-smooth);
-}
-img, svg, canvas { display: block; max-width: 100%; }
-button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
-a { color: inherit; text-decoration: none; }
-ul { list-style: none; padding: 0; margin: 0; }
-em { font-style: italic; color: var(--accent-2); }
-[data-mode="dark"] em { color: var(--accent-3); }
-
-::selection { background: color-mix(in srgb, var(--accent) 30%, transparent); color: var(--ink); }
-
-/* ---------- Cursor: pointer on all interactive elements ---------- */
-button,
-a,
-[role="button"],
-.ink,
-.wax-seal,
-.ember,
-.hud-btn,
-.ink-palette .ink,
-.feature-list li,
-.e2e-step {
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* Magnetic hover: lift interactive cards slightly */
-.feature-list li,
-.e2e-step,
-.mark-doc,
-.flipbook,
-.discard-stage,
-.download-card {
-  transition: transform 350ms var(--ease), box-shadow 350ms var(--ease);
-}
-@media (hover: hover) {
-  .feature-list li:hover {
-    transform: translateX(6px);
-    color: var(--ink);
-  }
-  .e2e-step:hover {
-    transform: translateY(-3px);
-    background: var(--bg-3);
-    border-color: var(--line-strong);
-    box-shadow: var(--paper-shadow);
-  }
-  .mark-doc:hover { box-shadow: var(--paper-shadow-lg); transform: translateY(-2px); }
-  .flipbook:hover { transform: rotate(-1.5deg) translateY(-3px); }
-  .discard-stage:hover { box-shadow: var(--paper-shadow-lg); transform: translateY(-2px); }
-  .download-card:hover { box-shadow: var(--paper-shadow-lg); transform: translateY(-2px); }
-
-  /* Glow on interactive buttons */
-  .hud-btn:hover {
-    box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 20%, transparent);
-  }
-  .wax-seal:hover {
-    filter: drop-shadow(0 14px 22px rgba(184, 92, 56, 0.45)) brightness(1.05);
-  }
-}
-
-/* ---------- Page layout ---------- */
-.pages {
-  position: relative;
-  width: 100%;
-}
-.page {
-  position: relative;
-  width: 100%;
-  min-height: var(--section-h);
-  padding: var(--pad-y) var(--pad-x);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-.page + .page {
-  border-top: 1px solid var(--line);
-}
-.page__inner {
-  position: relative;
-  width: 100%;
-  max-width: var(--maxw);
-  margin: 0 auto;
-  z-index: 2;
-}
-.page--center { text-align: center; }
-.page--center .body-text { margin-left: auto; margin-right: auto; }
-
-.page--two-col {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: clamp(36px, 6vw, 80px);
-  align-items: center;
-}
-.page--two-col--reverse > :first-child { order: 2; }
-
-@media (max-width: 860px) {
-  .page--two-col { grid-template-columns: 1fr; gap: clamp(28px, 4vw, 48px); }
-  .page--two-col--reverse > :first-child { order: 0; }
-  .page__visual { margin-bottom: 8px; }
-}
-
-/* Section dividers — subtle gradient lines */
-.page + .page::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 10%;
-  right: 10%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--line-strong), transparent);
-  z-index: 3;
-}
-
-/* ---------- Typography ---------- */
-.eyebrow {
-  font-family: var(--font-sans);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--primary);
-  margin: 0 0 18px;
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  position: relative;
-}
-.eyebrow::before {
-  content: "";
-  display: inline-block;
-  width: 20px;
-  height: 1px;
-  background: var(--primary);
-  opacity: 0.6;
-}
-.eyebrow--accent { color: var(--rust); }
-.eyebrow--accent::before { background: var(--rust); }
-.eyebrow--muted { color: var(--ink-3); }
-.eyebrow--muted::before { background: var(--ink-3); }
-
-.title {
-  font-family: var(--font-serif);
-  font-weight: 700;
-  font-size: clamp(52px, 9vw, 120px);
-  line-height: 0.95;
-  letter-spacing: -0.025em;
-  margin: 0 0 28px;
-  color: var(--ink);
-  cursor: pointer;
-  text-rendering: optimizeLegibility;
-}
-.title__line {
-  display: block;
-  overflow: hidden;
-  position: relative;
-}
-.title__line::after {
-  content: "";
-  position: absolute;
-  bottom: 2px;
-  left: 0;
-  width: 100%;
-  height: 1px;
-  background: linear-gradient(90deg, var(--accent), transparent);
-  opacity: 0;
-  transition: opacity 600ms var(--ease);
-}
-.title:hover .title__line::after {
-  opacity: 0.4;
-}
-.title em { font-style: italic; color: var(--accent-2); }
-
-.section-title {
-  font-family: var(--font-serif);
-  font-weight: 700;
-  font-size: clamp(36px, 5.5vw, 68px);
-  line-height: 1.02;
-  letter-spacing: -0.02em;
-  margin: 0 0 24px;
-  color: var(--ink);
-  text-rendering: optimizeLegibility;
-}
-.section-title--quiet { color: var(--ink-2); font-weight: 400; font-style: italic; }
-
-.lede {
-  font-family: var(--font-sans);
-  font-size: clamp(17px, 1.5vw, 20px);
-  line-height: 1.6;
-  color: var(--ink-2);
-  max-width: 38ch;
-  margin: 0 0 36px;
-  font-weight: 350;
-}
-.lede em { font-family: var(--font-serif); font-size: 1.1em; }
-
-.body-text {
-  font-size: clamp(15px, 1.15vw, 17px);
-  line-height: 1.75;
-  color: var(--ink-2);
-  margin: 0 0 28px;
-  max-width: 46ch;
-  font-weight: 380;
-}
-.body-text--center { margin-left: auto; margin-right: auto; }
-.body-text--muted { color: var(--ink-3); }
-
-/* ---------- HUD: zoom / mode / pages ---------- */
-.hud-zoom,
-.hud-pages {
-  position: fixed;
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: color-mix(in srgb, var(--bg) 75%, transparent);
-  backdrop-filter: blur(12px) saturate(1.2);
-  -webkit-backdrop-filter: blur(12px) saturate(1.2);
-  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
-  border-radius: 999px;
-  padding: 6px 14px;
-  font-family: var(--font-sans);
-  font-size: 12px;
-  color: var(--ink-2);
-  box-shadow: var(--paper-shadow);
-  transition: transform 250ms var(--ease), box-shadow 250ms var(--ease), background 250ms var(--ease);
-}
-.hud-zoom { right: 20px; bottom: 20px; }
-.hud-pages { left: 20px; bottom: 20px; }
-.hud-pages__current { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
-.hud-pages__sep { opacity: 0.3; margin: 0 1px; }
-.hud-pages__total { color: var(--ink-3); font-variant-numeric: tabular-nums; }
-.hud-zoom__level { min-width: 3.5em; text-align: center; color: var(--ink); font-variant-numeric: tabular-nums; font-weight: 500; }
-
-.hud-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 999px;
-  color: var(--ink-2);
-  font-size: 15px;
-  line-height: 1;
-  position: relative;
-  overflow: hidden;
-  transition: background 200ms var(--ease), color 200ms var(--ease), transform 200ms var(--ease);
-}
-.hud-btn:hover { background: color-mix(in srgb, var(--bg-2) 60%, transparent); color: var(--ink); }
-.hud-btn:active { transform: scale(0.92); }
-.hud-btn--mode {
-  position: fixed;
-  right: 20px;
-  top: 20px;
-  z-index: 50;
-  background: color-mix(in srgb, var(--bg) 75%, transparent);
-  backdrop-filter: blur(12px) saturate(1.2);
-  -webkit-backdrop-filter: blur(12px) saturate(1.2);
-  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
-  width: 38px;
-  height: 38px;
-  font-size: 17px;
-  box-shadow: var(--paper-shadow);
-}
-.mode-icon { display: inline-block; transition: transform 600ms var(--ease-spring); }
-[data-mode="dark"] .mode-icon { transform: rotate(180deg); }
-
-/* Button ripple (created via JS / pseudo-element) */
-.hud-btn::after,
-.erase-btn::after,
-.ink::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: 0;
-  background: radial-gradient(circle, currentColor 0%, transparent 60%);
-  transform: scale(0);
-  transition: transform 500ms var(--ease), opacity 600ms var(--ease);
-}
-.hud-btn:active::after,
-.erase-btn:active::after,
-.ink:active::after {
-  opacity: 0.2;
-  transform: scale(1.5);
-  transition: transform 0ms, opacity 0ms;
-}
-
-/* ---------- Zoom wrapper (applied to body content) ---------- */
-body.zoom-125 .pages { transform: scale(1.25); }
-body.zoom-150 .pages { transform: scale(1.5); }
-body.zoom-175 .pages { transform: scale(1.75); }
-body.zoom-200 .pages { transform: scale(2); }
-body.zoom-75  .pages { transform: scale(0.75); }
-body.zoom-50  .pages { transform: scale(0.5); }
-.pages {
-  transform-origin: top center;
-  transition: transform 350ms var(--ease);
-}
-
-/* ---------- Loader ---------- */
-.loader {
-  position: fixed;
-  inset: 0;
-  background: var(--bg);
-  z-index: 100;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 24px;
-  transition: opacity 800ms var(--ease), visibility 800ms var(--ease);
-}
-.loader.is-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-.loader__pulse {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 24px var(--accent), 0 0 48px color-mix(in srgb, var(--accent) 30%, transparent);
-  animation: pulse 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-}
-.loader__text {
-  font-family: var(--font-serif);
-  font-style: italic;
-  color: var(--ink-3);
-  font-size: 15px;
-  margin: 0;
-  letter-spacing: 0.02em;
-}
-@keyframes pulse {
-  0%, 100% { transform: scale(0.7); opacity: 0.5; }
-  50% { transform: scale(1.3); opacity: 1; }
-}
-
-/* ---------- Page 1: The Desk ---------- */
-.page--desk {
-  min-height: 100vh;
-  background: var(--bg);
-  position: relative;
-}
-.page--desk::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at 50% 35%, transparent 0%, rgba(0,0,0,0.08) 85%);
-  pointer-events: none;
-  z-index: 1;
-}
-/* Warm pool of light under the lamp */
-.page--desk::after {
-  content: "";
-  position: absolute;
-  left: 14%;
-  top: 18%;
-  width: 55%;
-  height: 55%;
-  background: radial-gradient(ellipse, rgba(255, 210, 140, 0.15) 0%, rgba(255, 190, 120, 0.06) 40%, transparent 65%);
-  pointer-events: none;
-  z-index: 1;
-  mix-blend-mode: multiply;
-  animation: lightPool 10s ease-in-out infinite;
-}
-@keyframes lightPool {
-  0%, 100% { transform: scale(1); opacity: 0.85; }
-  50%      { transform: scale(1.03); opacity: 1; }
-}
-[data-mode="dark"] .page--desk::after {
-  background: radial-gradient(ellipse, rgba(255, 170, 100, 0.14) 0%, rgba(255, 140, 70, 0.05) 40%, transparent 65%);
-  mix-blend-mode: screen;
-}
-
-.scene {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-}
-.desk-overlay {
-  position: relative;
-  z-index: 2;
-  max-width: 680px;
-  padding: 10vh 0 0;
-  pointer-events: none;
-}
-.desk-overlay > * { pointer-events: auto; }
-.scroll-hint {
-  display: inline-block;
-  font-family: var(--font-hand);
-  font-size: 20px;
-  color: var(--ink-3);
-  animation: float 3.5s ease-in-out infinite;
-  user-select: none;
-  opacity: 0.8;
-}
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(5px); }
-}
-.hero-cta { margin-top: 16px; }
-
-.margin-note {
-  position: absolute;
-  z-index: 3;
-  font-family: var(--font-hand);
-  font-size: 17px;
-  color: var(--ink-3);
-  pointer-events: none;
-  opacity: 0;
-  transform: rotate(-3deg);
-}
-.margin-note--tl { top: 12vh; right: 8vw; transform: rotate(-3deg); }
-.margin-note--br { bottom: 10vh; left: 6vw; transform: rotate(2deg); }
-[data-mode="dark"] .margin-note { color: var(--ink-2); }
-
-/* ---------- Page 2: Open / flipbook ---------- */
-.flipbook {
-  position: relative;
-  width: 100%;
-  max-width: 440px;
-  aspect-ratio: 3 / 4;
-  margin: 0 auto;
-  perspective: 1800px;
-}
-.flipbook__page {
-  position: absolute;
-  inset: 0;
-  background: var(--bg-2);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--paper-shadow-lg);
-  padding: 36px 30px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  transform-style: preserve-3d;
-  transition: transform 1.4s var(--ease), box-shadow 1.4s var(--ease);
-  backface-visibility: hidden;
-}
-.flipbook__page--back {
-  background: linear-gradient(135deg, var(--bg-3), var(--bg-2));
-  transform: rotateY(180deg);
-}
-.flipbook.is-flipped .flipbook__page--front {
-  transform: rotateY(-180deg);
-  box-shadow: inset 10px 0 20px -10px rgba(0,0,0,0.12);
-}
-.flipbook.is-flipped .flipbook__page--back {
-  transform: rotateY(0deg);
-}
-.flipbook__lines {
-  display: flex;
-  flex-direction: column;
-  gap: 11px;
-}
-.flipbook__lines span {
-  display: block;
-  height: 7px;
-  background: var(--ink-3);
-  border-radius: 4px;
-  opacity: 0.3;
-}
-.flipbook__lines span:nth-child(odd) { width: 85%; }
-.flipbook__lines span:nth-child(even) { width: 68%; }
-.flipbook__lines span:nth-child(3n) { width: 58%; opacity: 0.2; }
-.flipbook__lines span:nth-child(5n) { width: 90%; }
-.flipbook__heading {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: 26px;
-  margin: 0 0 18px;
-  color: var(--ink-2);
-}
-.flipbook__body {
-  font-size: 15px;
-  line-height: 1.75;
-  color: var(--ink-2);
-  margin: 0;
-}
-
-.feature-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 28px;
-}
-.feature-list li {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  font-size: 15px;
-  color: var(--ink-2);
-  padding: 6px 8px;
-  border-radius: var(--radius);
-  transition: color 200ms var(--ease), transform 250ms var(--ease), background 250ms var(--ease);
-}
-@media (hover: hover) {
-  .feature-list li:hover {
-    background: color-mix(in srgb, var(--bg-2) 50%, transparent);
-  }
-}
-.dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--accent);
-  flex-shrink: 0;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
-  transition: box-shadow 300ms var(--ease);
-}
-.feature-list li:hover .dot {
-  box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 30%, transparent);
-}
-
-/* ---------- Page 3: Mark ---------- */
-.page--mark { background: var(--bg); }
-
-.ink-palette {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 32px;
-  flex-wrap: wrap;
-}
-.ink-palette__label {
-  font-family: var(--font-hand);
-  font-size: 18px;
-  color: var(--ink-3);
-  margin-right: 2px;
-}
-.ink {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: var(--ink);
-  border: 2.5px solid var(--bg);
-  box-shadow: 0 0 0 1px var(--line-strong), 0 3px 8px -3px rgba(0,0,0,0.18);
-  transition: transform 250ms var(--ease-spring), box-shadow 250ms var(--ease);
-  position: relative;
-  overflow: visible;
-}
-.ink:hover { transform: translateY(-4px) scale(1.1); }
-.ink[aria-pressed="true"] {
-  box-shadow: 0 0 0 2.5px var(--ink), 0 0 12px color-mix(in srgb, var(--accent) 30%, transparent);
-  transform: translateY(-2px) scale(1.05);
-}
-
-.freehand-toggle {
-  margin-left: 8px;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: transparent;
-  border: 1.5px dashed var(--ink-3);
-  color: var(--ink-3);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 15px;
-  transition: all 250ms var(--ease);
-  font-family: var(--font-hand);
-}
-.freehand-toggle:hover { color: var(--rust); border-color: var(--rust); }
-.freehand-toggle.is-on {
-  background: var(--rust);
-  color: var(--bg);
-  border-color: var(--rust);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--rust) 25%, transparent), 0 4px 12px -4px rgba(184,92,56,0.3);
-}
-
-.mark-doc {
-  position: relative;
-  background: linear-gradient(170deg, var(--bg-2) 0%, color-mix(in srgb, var(--bg-2) 92%, var(--bg)) 100%);
-  padding: 32px 34px 56px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--line);
-  box-shadow: var(--paper-shadow-lg);
-  max-width: 440px;
-  margin: 0 auto;
-  overflow: hidden;
-}
-.mark-doc h4 {
-  font-family: var(--font-serif);
-  font-weight: 600;
-  font-style: italic;
-  font-size: 17px;
-  margin: 0 0 18px;
-  color: var(--ink-3);
-  letter-spacing: 0.03em;
-}
-.mark-doc p {
-  font-family: var(--font-hand);
-  font-size: 21px;
-  line-height: 1.55;
-  color: var(--ink);
-  margin: 0 0 14px;
-}
-.mark-doc .hl {
-  background: linear-gradient(180deg, transparent 54%, color-mix(in srgb, var(--hl, var(--accent)) 55%, transparent) 54%, color-mix(in srgb, var(--hl, var(--accent)) 55%, transparent) 90%, transparent 90%);
-  padding: 0 3px;
-  border-radius: 2px;
-  cursor: pointer;
-  transition: filter 200ms var(--ease), background 200ms var(--ease);
-}
-.mark-doc .hl:hover { filter: brightness(0.92); }
-.ink-svg {
-  position: absolute;
-  inset: auto 16px 8px 16px;
-  width: calc(100% - 32px);
-  height: 60px;
-  pointer-events: none;
-}
-.ink-path {
-  fill: none;
-  stroke: var(--rust);
-  stroke-width: 2.5;
-  stroke-linecap: round;
-  stroke-dasharray: 600;
-  stroke-dashoffset: 600;
-  opacity: 0.65;
-}
-#freehand-canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 5;
-  touch-action: none;
-}
-#freehand-canvas.is-active {
-  pointer-events: auto;
-  cursor: crosshair;
-}
-
-/* ---------- Page 4: Discard ---------- */
-.page--discard {
-  background: linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
-}
-.discard-stage {
-  margin: 44px auto 0;
-  max-width: 600px;
-  padding: 48px 40px;
-  background: linear-gradient(145deg, var(--bg-2) 0%, color-mix(in srgb, var(--bg-2) 90%, var(--bg)) 100%);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--paper-shadow-lg);
-  position: relative;
-  overflow: visible;
-}
-.discard-text {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: clamp(20px, 2.6vw, 32px);
-  line-height: 1.4;
-  color: var(--ink);
-  margin: 0 0 36px;
-  text-align: center;
-  position: relative;
-}
-.discard-scribble {
-  display: inline-block;
-  font-family: var(--font-hand);
-  font-size: 0.75em;
-  color: var(--rust);
-  text-decoration: line-through;
-  text-decoration-color: var(--rust);
-  margin-left: 8px;
-  transform: rotate(-2deg);
-  position: relative;
-  transform-origin: center center;
-}
-.discard-scribble.is-erased {
-  opacity: 0;
-  transform: scale(0.5) rotate(25deg);
-  transition: opacity 600ms var(--ease), transform 700ms var(--ease-spring);
-}
-.erase-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0 auto;
-  padding: 12px 28px;
-  background: var(--ink);
-  color: var(--bg);
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  transition: transform 250ms var(--ease), background 200ms var(--ease), box-shadow 250ms var(--ease);
-  position: relative;
-  overflow: hidden;
-}
-@media (hover: hover) {
-  .erase-btn:hover {
-    background: var(--ink-2);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px -6px rgba(44, 36, 22, 0.3);
-  }
-}
-.erase-btn:active { transform: scale(0.96); }
-.erase-btn[disabled] { pointer-events: none; }
-.erase-btn__icon { font-size: 16px; }
-
-/* dust particles */
-.dust {
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--ink-3);
-  pointer-events: none;
-  will-change: transform, opacity;
-  z-index: 4;
-}
-
-/* ---------- Page 5: Share / wax seal ---------- */
-.page--share { background: var(--bg); }
-
-.e2e-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 14px;
-  margin-top: 32px;
-}
-.e2e-step {
-  padding: 20px 18px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: linear-gradient(160deg, var(--bg-2) 0%, color-mix(in srgb, var(--bg-2) 92%, var(--bg)) 100%);
-  position: relative;
-  transition: transform 300ms var(--ease), box-shadow 300ms var(--ease), border-color 300ms var(--ease);
-}
-.e2e-step::before {
-  content: "";
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--accent);
-  opacity: 0.5;
-}
-.e2e-step__num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--accent) 85%, transparent);
-  color: var(--ink);
-  font-weight: 600;
-  font-size: 13px;
-  margin-bottom: 10px;
-}
-.e2e-step p {
-  font-size: 13px;
-  line-height: 1.55;
-  color: var(--ink-2);
-  margin: 0;
-}
-@media (max-width: 640px) {
-  .e2e-grid { grid-template-columns: 1fr; }
-}
-
-.wax-seal {
-  width: clamp(130px, 20vw, 180px);
-  height: clamp(130px, 20vw, 180px);
-  display: block;
-  margin: 0 auto;
-  cursor: pointer;
-  filter: drop-shadow(0 14px 20px rgba(184, 92, 56, 0.30));
-  transition: transform 350ms var(--ease), filter 350ms var(--ease);
-  position: relative;
-  overflow: visible;
-}
-@media (hover: hover) {
-  .wax-seal:hover { transform: scale(1.06) rotate(-4deg); }
-}
-.wax-seal:active { transform: scale(0.94); }
-.wax-seal.is-stamped {
-  animation: stamp 700ms var(--ease);
-}
-@keyframes stamp {
-  0%   { transform: scale(2.2) rotate(20deg); opacity: 0; }
-  55%  { transform: scale(0.88) rotate(-4deg); opacity: 1; }
-  100% { transform: scale(1) rotate(0); }
-}
-.seal-caption {
-  text-align: center;
-  font-family: var(--font-hand);
-  font-size: 17px;
-  color: var(--ink-3);
-  margin: 14px 0 0;
-}
-
-.page__visual--center {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-/* ---------- Page 6: Download ---------- */
-.download-card {
-  margin: 44px auto 0;
-  max-width: 680px;
-  background: linear-gradient(155deg, var(--bg-2) 0%, color-mix(in srgb, var(--bg-2) 92%, var(--bg)) 100%);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-xl);
-  padding: 36px;
-  box-shadow: var(--paper-shadow-lg);
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 28px;
-  align-items: center;
-}
-@media (max-width: 480px) {
-  .hud-zoom,
-  .hud-pages {
-    padding: 4px 10px;
-    font-size: 11px;
-    gap: 6px;
-  }
-  .hud-zoom { right: 10px; bottom: 10px; }
-  .hud-pages { left: 10px; bottom: 10px; }
-  .hud-btn--mode {
-    width: 34px;
-    height: 34px;
-    font-size: 15px;
-    right: 12px;
-    top: 12px;
-  }
-  .download-card {
-    grid-template-columns: 1fr;
-    text-align: center;
-    gap: 20px;
-  }
-}
-
-@media (max-width: 720px) {
-  .download-card {
-    grid-template-columns: 1fr;
-    text-align: center;
-    gap: 24px;
-  }
-  .download-meta { align-items: center; }
-  .download-meta__row { justify-content: center; }
-}
-.play-badge {
-  display: inline-block;
-  width: 176px;
-  border-radius: 10px;
-  overflow: hidden;
-  transition: transform 250ms var(--ease), box-shadow 250ms var(--ease);
-  box-shadow: 0 6px 18px -6px rgba(0,0,0,0.25);
-}
-@media (hover: hover) {
-  .play-badge:hover { transform: translateY(-3px); box-shadow: 0 10px 28px -8px rgba(0,0,0,0.35); }
-}
-
-.download-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.download-meta__row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 13px;
-  margin: 0;
-  flex-wrap: wrap;
-}
-.download-meta__label {
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-  width: 90px;
-  font-weight: 600;
-}
-.download-link {
-  color: var(--rust);
-  font-weight: 500;
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  text-decoration-thickness: 1px;
-  text-decoration-color: color-mix(in srgb, var(--rust) 50%, transparent);
-  font-family: var(--font-sans);
-  transition: color 200ms var(--ease), text-decoration-color 200ms var(--ease);
-}
-.download-link:hover { color: var(--accent-2); text-decoration-color: var(--accent-2); }
-.download-meta__hash {
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: 11px;
-  color: var(--ink-2);
-  background: color-mix(in srgb, var(--bg) 60%, transparent);
-  padding: 3px 8px;
-  border-radius: 4px;
-  border: 1px solid var(--line);
-}
-
-.qr-wrap { display: flex; align-items: center; justify-content: center; }
-.qr {
-  position: relative;
-  width: clamp(96px, 16vw, 130px);
-  aspect-ratio: 1;
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 8px;
-  display: grid;
-  gap: 1px;
-  overflow: hidden;
-  box-shadow: inset 0 1px 3px rgba(0,0,0,0.04);
-}
-.qr__grid { display: grid; }
-.qr__cell {
-  background: var(--ink);
-  border-radius: 0.5px;
-  aspect-ratio: 1;
-}
-.qr__cell--off { background: transparent; }
-.qr__caption {
-  position: absolute;
-  bottom: -24px;
-  left: 0;
-  right: 0;
-  text-align: center;
-  font-family: var(--font-hand);
-  font-size: 14px;
-  color: var(--ink-3);
-}
-
-/* ---------- Page 7: Ember ---------- */
-.page--ember {
-  background: var(--bg);
-  min-height: 100vh;
-  position: relative;
-}
-.page--ember::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at 50% 55%, transparent 25%, rgba(0,0,0,0.55) 100%);
-  pointer-events: none;
-}
-.page--ember-inner { position: relative; z-index: 2; }
-
-.ember {
-  position: relative;
-  width: 88px;
-  height: 88px;
-  margin: 52px auto 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-.ember__coal {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #6B3F1F 0%, #2A1408 80%);
-  box-shadow:
-    0 0 10px rgba(255, 120, 40, 0.12),
-    inset 0 -4px 8px rgba(0, 0, 0, 0.4);
-  position: relative;
-  z-index: 2;
-  transition: box-shadow 600ms var(--ease);
-}
-.ember__halo {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 140, 60, 0.45) 0%, transparent 60%);
-  filter: blur(10px);
-  animation: emberPulse 2.8s ease-in-out infinite;
-  z-index: 1;
-}
-.ember.is-lit .ember__coal {
-  background: radial-gradient(circle at 35% 35%, #FFD090 0%, #D4721C 40%, #2A1408 100%);
-  box-shadow:
-    0 0 36px rgba(255, 140, 60, 0.75),
-    0 0 72px rgba(255, 100, 30, 0.4),
-    0 0 120px rgba(255, 80, 20, 0.15),
-    inset 0 -4px 8px rgba(0, 0, 0, 0.4);
-}
-.ember.is-lit .ember__halo {
-  background: radial-gradient(circle, rgba(255, 170, 90, 0.9) 0%, rgba(255, 140, 60, 0.3) 40%, transparent 65%);
-  animation: emberPulse 1.4s ease-in-out infinite;
-}
-@keyframes emberPulse {
-  0%, 100% { transform: scale(0.82); opacity: 0.55; }
-  50% { transform: scale(1.18); opacity: 1; }
-}
-.ember-hint {
-  font-family: var(--font-hand);
-  font-size: 16px;
-  color: var(--ink-3);
-  text-align: center;
-  margin: 0 0 36px;
-  opacity: 0.7;
-}
-
-.footer {
-  margin-top: 72px;
-  padding-top: 32px;
-  border-top: 1px solid var(--line);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
-  text-align: center;
-}
-.footer__brand {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: 14px;
-  color: var(--ink-2);
-  margin: 0;
-  letter-spacing: 0.02em;
-}
-.footer__nav {
-  display: flex;
-  gap: 20px;
-  font-size: 12px;
-  color: var(--ink-3);
-  flex-wrap: wrap;
-  justify-content: center;
-  font-weight: 500;
-  letter-spacing: 0.03em;
-}
-.footer__nav a { transition: color 200ms var(--ease); position: relative; }
-.footer__nav a::after {
-  content: "";
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  width: 0;
-  height: 1px;
-  background: var(--accent);
-  transition: width 300ms var(--ease);
-}
-@media (hover: hover) {
-  .footer__nav a:hover { color: var(--accent-2); }
-  .footer__nav a:hover::after { width: 100%; }
-}
-.footer__small {
-  font-size: 11px;
-  color: var(--ink-3);
-  margin: 4px 0 0;
-  font-style: italic;
-  font-family: var(--font-serif);
-  letter-spacing: 0.02em;
-}
-
-/* ---------- Touch hint (mobile only) ---------- */
-.touch-hint {
-  display: none;
-}
-@media (hover: none) and (pointer: coarse) {
-  .touch-hint {
-    display: block;
-    position: fixed;
-    bottom: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 40;
-    font-family: var(--font-hand);
-    font-size: 15px;
-    color: var(--ink-3);
-    text-align: center;
-    opacity: 0;
-    animation: touchHint 7s ease-out 2.5s forwards;
-    background: color-mix(in srgb, var(--bg) 80%, transparent);
-    padding: 8px 20px;
-    border-radius: 999px;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-  }
-}
-@keyframes touchHint {
-  0%   { opacity: 0; transform: translate(-50%, 8px); }
-  15%  { opacity: 1; transform: translate(-50%, 0); }
-  75%  { opacity: 1; }
-  100% { opacity: 0; }
-}
-
-/* ---------- Search palette ---------- */
-.palette {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 14vh;
-}
-.palette[hidden] { display: none; }
-.palette__backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(20, 16, 10, 0.50);
-  backdrop-filter: blur(6px) saturate(0.8);
-  -webkit-backdrop-filter: blur(6px) saturate(0.8);
-}
-.palette__panel {
-  position: relative;
-  width: min(600px, 90vw);
-  background: var(--bg);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--paper-shadow-xl);
-  overflow: hidden;
-  animation: paletteIn 250ms var(--ease-out);
-}
-@keyframes paletteIn {
-  from { opacity: 0; transform: translateY(-12px) scale(0.97); }
-  to   { opacity: 1; transform: none; }
-}
-.palette__input {
-  width: 100%;
-  padding: 20px 24px;
-  font-family: var(--font-sans);
-  font-size: 17px;
-  color: var(--ink);
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid var(--line);
-  outline: none;
-  font-weight: 400;
-}
-.palette__input::placeholder { color: var(--ink-3); font-weight: 350; }
-.palette__results {
-  max-height: 340px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-.palette__results li {
-  padding: 12px 24px;
-  font-size: 14px;
-  color: var(--ink-2);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  transition: background 120ms var(--ease), padding-left 180ms var(--ease);
-}
-.palette__results li:hover,
-.palette__results li[aria-selected="true"] {
-  background: var(--bg-2);
-  color: var(--ink);
-  padding-left: 30px;
-}
-.palette__results li mark {
-  background: color-mix(in srgb, var(--accent) 35%, transparent);
-  color: var(--ink);
-  padding: 0 3px;
-  border-radius: 3px;
-  font-weight: 500;
-}
-.palette__results li .badge {
-  margin-left: auto;
-  font-size: 10px;
-  color: var(--ink-3);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  font-weight: 600;
-}
-.palette__results li.is-empty {
-  color: var(--ink-3);
-  font-style: italic;
-  cursor: default;
-}
-.palette__results li.is-empty:hover { background: transparent; padding-left: 24px; }
-.palette__hint {
-  margin: 0;
-  padding: 12px 24px;
-  font-size: 11px;
-  color: var(--ink-3);
-  border-top: 1px solid var(--line);
-  background: color-mix(in srgb, var(--bg-2) 50%, transparent);
-  font-weight: 400;
-}
-.palette__hint kbd {
-  font-family: ui-monospace, monospace;
-  font-size: 10px;
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-bottom-width: 2px;
-  padding: 1px 5px;
-  border-radius: 3px;
-  color: var(--ink-2);
-}
-
-/* ---------- Ghost cursor trail ---------- */
-.cursor-trail {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 40;
-}
-.cursor-trail__dot {
-  position: absolute;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--accent);
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  will-change: transform, opacity;
-  mix-blend-mode: multiply;
-  filter: blur(0.5px);
-}
-[data-mode="dark"] .cursor-trail__dot { mix-blend-mode: screen; filter: blur(0); }
-
-/* ---------- Easter-egg overlays ---------- */
-.crayon-banner {
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 300;
-  background: var(--ink);
-  color: var(--bg);
-  padding: 10px 22px;
-  border-radius: 999px;
-  font-family: var(--font-hand);
-  font-size: 18px;
-  box-shadow: 0 8px 28px -8px rgba(0,0,0,0.35);
-  animation: crayonIn 600ms var(--ease-out);
-}
-@keyframes crayonIn {
-  from { opacity: 0; transform: translate(-50%, -12px) scale(0.95); }
-  to   { opacity: 1; transform: translate(-50%, 0) scale(1); }
-}
-body.crayon-mode .section-title,
-body.crayon-mode .title {
-  background: linear-gradient(90deg, #C4A962, #B85C38, #2A5B5C, #7D8B6F, #C4A962);
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: rainbow 5s linear infinite;
-}
-@keyframes rainbow {
-  to { background-position: 200% 0; }
-}
-
-.runic-flash {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 250;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: radial-gradient(ellipse at center, transparent 0%, rgba(20, 16, 10, 0.6) 100%);
-  opacity: 0;
-  transition: opacity 400ms var(--ease);
-}
-.runic-flash.is-active { opacity: 1; }
-.runic-flash__glyph {
-  font-family: "Playfair Display", serif;
-  font-size: clamp(72px, 14vw, 200px);
-  font-weight: 700;
-  color: var(--accent);
-  text-shadow: 0 0 40px rgba(196, 169, 98, 0.5);
-  letter-spacing: 0.3em;
-  animation: glyphSpin 1.2s var(--ease) forwards;
-}
-@keyframes glyphSpin {
-  0%   { transform: scale(0.4) rotate(-15deg); opacity: 0; filter: blur(10px); }
-  35%  { transform: scale(1.08) rotate(0deg);    opacity: 1; filter: blur(0); }
-  100% { transform: scale(1)   rotate(0deg);    opacity: 0; filter: blur(0); }
-}
-
-/* ---------- Shortcuts dialog ---------- */
-.shortcuts {
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-xl);
-  padding: 32px 36px;
-  background: var(--bg);
-  color: var(--ink);
-  max-width: 400px;
-  box-shadow: var(--paper-shadow-xl);
-}
-.shortcuts::backdrop { background: rgba(0,0,0,0.45); backdrop-filter: blur(4px); }
-.shortcuts h3 { font-family: var(--font-serif); margin: 0 0 20px; font-size: 22px; font-weight: 700; }
-.shortcuts ul { display: flex; flex-direction: column; gap: 10px; margin: 0 0 20px; font-size: 13px; }
-.shortcuts kbd {
-  font-family: ui-monospace, monospace;
-  font-size: 11px;
-  background: var(--bg-2);
-  border: 1px solid var(--line);
-  border-bottom-width: 2px;
-  padding: 2px 7px;
-  border-radius: 4px;
-  color: var(--ink-2);
-  margin-right: 6px;
-  font-weight: 500;
-}
-.shortcuts__easter {
-  font-family: var(--font-hand);
-  font-size: 15px;
-  color: var(--ink-3);
-  margin: 0 0 18px;
-}
-
-/* ---------- Page shake (Ragnarök) ---------- */
-@keyframes ragnarok {
-  0%, 100% { transform: translate(0, 0) rotate(0); }
-  10% { transform: translate(-2px, 1px) rotate(-0.3deg); }
-  20% { transform: translate(3px, -1px) rotate(0.4deg); }
-  30% { transform: translate(-3px, 2px) rotate(-0.5deg); }
-  40% { transform: translate(4px, -2px) rotate(0.6deg); }
-  50% { transform: translate(-5px, 0) rotate(-0.7deg); }
-  60% { transform: translate(5px, 0) rotate(0.7deg); }
-  70% { transform: translate(-3px, 1px) rotate(-0.4deg); }
-  80% { transform: translate(2px, -1px) rotate(0.3deg); }
-  90% { transform: translate(-1px, 0) rotate(-0.1deg); }
-}
-body.ragnarok .pages {
-  animation: ragnarok 800ms var(--ease);
-}
-body.ragnarok::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: radial-gradient(ellipse at center, transparent 25%, rgba(184, 92, 56, 0.2) 100%);
-  z-index: 90;
-  pointer-events: none;
-  animation: flashIn 800ms ease-out;
-}
-@keyframes flashIn {
-  0%   { opacity: 0; }
-  15%  { opacity: 1; }
-  100% { opacity: 0; }
-}
-
-/* ---------- Reduced motion ---------- */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-  .flipbook__page { transition: none; }
-  body::before { display: none; }
-}
-
-/* ---------- Print: A4 brochure ---------- */
-@media print {
-  @page {
-    size: A4 portrait;
-    margin: 18mm 16mm;
-  }
-  :root {
-    --bg: #fff;
-    --bg-2: #fff;
-    --bg-3: #fff;
-    --ink: #000;
-    --ink-2: #222;
-    --ink-3: #555;
-    --line: #ddd;
-  }
-  body {
-    background: #fff;
-    color: #000;
-    font-size: 11pt;
-  }
-  body::before { display: none; }
-  .loader, .hud-btn, .hud-zoom, .hud-pages,
-  .cursor-trail, .scene, .scene canvas, .palette,
-  .wax-seal, .ink-palette, .erase-btn, .ember,
-  .scroll-hint, .qr-wrap, .play-badge, #mode-toggle,
-  .margin-note, .crayon-banner, .runic-flash,
-  .touch-hint, .freehand-toggle, #freehand-canvas {
-    display: none !important;
-  }
-  .pages { transform: none !important; }
-  .page {
-    page-break-after: always;
-    page-break-inside: avoid;
-    min-height: auto;
-    height: auto;
-    padding: 0;
-    border: 0;
-    display: block;
-  }
-  .page__inner { max-width: 100%; }
-  .page--two-col { display: block; }
-  .page--desk { padding-top: 0; }
-  .desk-overlay { padding: 0; }
-  .title { font-size: 36pt; margin-bottom: 12pt; }
-  .lede { font-size: 12pt; max-width: 100%; }
-  .section-title { font-size: 24pt; margin: 0 0 8pt; }
-  .body-text { font-size: 11pt; max-width: 100%; }
-  .footer { margin-top: 24pt; }
-  .download-card {
-    box-shadow: none;
-    border: 1px solid #999;
-    padding: 16pt;
-  }
-  a { color: #000; text-decoration: underline; }
-  .page__visual, .mark-doc, .flipbook, .discard-stage, .download-card {
-    box-shadow: none !important;
-    border: 1px solid #ccc !important;
-  }
-}
-</style>
-</head>
-<body>
-  <!-- Loader -->
-  <div id="loader" class="loader" aria-hidden="true">
-    <div class="loader__pulse"></div>
-    <p class="loader__text">stoking the lamp…</p>
-  </div>
-
-  <!-- Touch hint (mobile) -->
-  <p class="touch-hint" aria-hidden="true">swipe to turn the page ↓</p>
-
-  <!-- Mode toggle button (paper / dark) -->
-  <button id="mode-toggle" class="hud-btn hud-btn--mode" aria-label="Toggle dark mode" title="Toggle dark / paper (d)">
-    <span class="mode-icon" aria-hidden="true">☾</span>
-  </button>
-
-  <!-- Zoom HUD -->
-  <div class="hud-zoom" role="group" aria-label="Zoom controls">
-    <button class="hud-btn" id="zoom-out" aria-label="Zoom out" title="Zoom out (-)">−</button>
-    <span class="hud-zoom__level" id="zoom-level">100%</span>
-    <button class="hud-btn" id="zoom-in" aria-label="Zoom in" title="Zoom in (+)">+</button>
-  </div>
-
-  <!-- Page indicator -->
-  <div class="hud-pages" aria-label="Page indicator">
-    <span class="hud-pages__current" id="page-current">01</span>
-    <span class="hud-pages__sep">/</span>
-    <span class="hud-pages__total">07</span>
-  </div>
-
-  <!-- Search command palette -->
-  <div id="search-palette" class="palette" role="dialog" aria-label="Search" hidden>
-    <div class="palette__backdrop" data-palette-close></div>
-    <div class="palette__panel">
-      <input
-        type="search"
-        id="palette-input"
-        class="palette__input"
-        placeholder="Search the desk…  (try 'highlight', 'share', 'download', 'privacy')"
-        autocomplete="off"
-      />
-      <ul id="palette-results" class="palette__results" role="listbox"></ul>
-      <p class="palette__hint">Press <kbd>Esc</kbd> to close · <kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>Enter</kbd> to jump</p>
-    </div>
-  </div>
-
-  <!-- The Desk: scroll container; each section is a "page" -->
-  <main id="pages" class="pages">
-
-    <!-- ==================== 1. THE DESK ==================== -->
-    <section class="page page--desk" data-page="01" data-title="The Desk">
-      <div class="page__inner">
-        <canvas id="scene" class="scene" aria-label="A warm study desk with lamp, notebook, tablet and tea"></canvas>
-
-        <div class="desk-overlay">
-          <p class="eyebrow">Feya PDF · v1.0</p>
-          <h1 class="title">
-            <span class="title__line">Read</span>
-            <span class="title__line">carefully.</span>
-          </h1>
-          <p class="lede">
-            A quiet PDF reader for Android. Made for the people who actually
-            <em>read</em> the things they download — the research papers, the
-            medical notes, the long letters, the books that change how they think.
-          </p>
-          <div class="hero-cta">
-            <span class="scroll-hint">Scroll to turn the page ↓</span>
-          </div>
-        </div>
-
-        <div class="margin-note margin-note--tl" data-cursor>
-          The lamp is always on.
-        </div>
-        <div class="margin-note margin-note--br" data-cursor>
-          tea, cold by now
-        </div>
-      </div>
-    </section>
-
-    <!-- ==================== 2. OPEN ==================== -->
-    <section class="page page--open" data-page="02" data-title="Open">
-      <div class="page__inner page--two-col">
-        <div class="page__visual">
-          <div class="flipbook" id="flipbook">
-            <div class="flipbook__page flipbook__page--front">
-              <div class="flipbook__lines">
-                <span></span><span></span><span></span><span></span><span></span>
-                <span></span><span></span><span></span><span></span><span></span>
-              </div>
-            </div>
-            <div class="flipbook__page flipbook__page--back">
-              <h3 class="flipbook__heading">Chapter I.</h3>
-              <p class="flipbook__body">
-                The folder on the desk was labelled in her own hand — small,
-                even, slightly tilted. Inside, a single PDF. Forty-two pages.
-                She opened it the way you open anything that matters:
-                <em>carefully</em>.
-              </p>
-            </div>
-          </div>
-        </div>
-        <div class="page__text">
-          <p class="eyebrow eyebrow--accent">02 · Open</p>
-          <h2 class="section-title">A file is a small <em>intention</em>.</h2>
-          <p class="body-text">
-            Feya opens PDFs the way they were meant to be opened — full-bleed,
-            type-tuned, with margins that breathe. Pinch to zoom. Double-tap to
-            fit width. Or just let the text settle into its line.
-          </p>
-          <ul class="feature-list">
-            <li><span class="dot"></span> Full-bleed reading · 100% fidelity</li>
-            <li><span class="dot"></span> Outline, bookmarks, layers preserved</li>
-            <li><span class="dot"></span> Form fields, signatures, annotations</li>
-            <li><span class="dot"></span> Offline · zero accounts · zero tracking</li>
-          </ul>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==================== 3. MARK ==================== -->
-    <section class="page page--mark" data-page="03" data-title="Mark">
-      <div class="page__inner page--two-col page--two-col--reverse">
-        <div class="page__text">
-          <p class="eyebrow eyebrow--accent">03 · Mark</p>
-          <h2 class="section-title">Leave a <em>trace</em>.</h2>
-          <p class="body-text">
-            Highlight with the warmth of a pencil, not the coldness of a button.
-            Six inks. Pressure-aware strokes. Every mark saved, every colour
-            remembered. Or draw your own.
-          </p>
-          <div class="ink-palette" id="ink-palette" role="radiogroup" aria-label="Ink color">
-            <span class="ink-palette__label">ink:</span>
-            <button class="ink" data-ink="#C4A962" style="--ink:#C4A962" aria-label="Brass"></button>
-            <button class="ink" data-ink="#7D8B6F" style="--ink:#7D8B6F" aria-label="Sage"></button>
-            <button class="ink" data-ink="#B85C38" style="--ink:#B85C38" aria-label="Rust"></button>
-            <button class="ink" data-ink="#2A5B5C" style="--ink:#2A5B5C" aria-label="Teal"></button>
-            <button class="ink" data-ink="#2C2416" style="--ink:#2C2416" aria-label="Ink"></button>
-            <button class="ink" data-ink="#E8B4BC" style="--ink:#E8B4BC" aria-label="Rose"></button>
-            <button class="freehand-toggle" id="freehand-toggle" type="button" aria-label="Freehand draw" title="Freehand draw">✎</button>
-          </div>
-        </div>
-        <div class="page__visual">
-          <article class="mark-doc" id="mark-doc">
-            <h4>Patient Notes — Folio 14</h4>
-            <p>
-              Continue <mark class="hl" data-hl>low-dose aspirin 81mg</mark> daily.
-              Recheck <mark class="hl" data-hl>blood pressure</mark> in two weeks.
-              Consider <mark class="hl" data-hl>lipid panel</mark> at next visit.
-            </p>
-            <p>
-              Patient reports improved sleep since reducing screen time after
-              <mark class="hl" data-hl>21:00</mark>. Mood stable. No reported
-              side-effects from current regimen.
-            </p>
-            <svg class="ink-svg" id="ink-svg" viewBox="0 0 400 80" preserveAspectRatio="none" aria-hidden="true">
-              <path class="ink-path" d="M 10 60 Q 80 10 160 50 T 320 40 T 390 30" />
-            </svg>
-            <canvas id="freehand-canvas" aria-label="Freehand drawing canvas"></canvas>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==================== 4. DISCARD ==================== -->
-    <section class="page page--discard" data-page="04" data-title="Discard">
-      <div class="page__inner page--center">
-        <p class="eyebrow eyebrow--accent">04 · Discard</p>
-        <h2 class="section-title">Or <em>erase</em>.</h2>
-        <p class="body-text body-text--center">
-          Made a mark you regret? Brush it away.
-          The page returns. No streaks. No judgement.
-        </p>
-
-        <div class="discard-stage" id="discard-stage">
-          <p class="discard-text">
-            "The wound is the place where the Light enters you."
-            <span class="discard-scribble" id="discard-scribble">~~ first draft ~~</span>
-          </p>
-          <button class="erase-btn" id="erase-btn" type="button">
-            <span class="erase-btn__icon" aria-hidden="true">⌫</span>
-            <span>Erase</span>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==================== 5. SHARE ==================== -->
-    <section class="page page--share" data-page="05" data-title="Share">
-      <div class="page__inner page--two-col">
-        <div class="page__text">
-          <p class="eyebrow eyebrow--accent">05 · Share</p>
-          <h2 class="section-title">Sealed with a <em>mark</em>.</h2>
-          <p class="body-text">
-            Share a single page, a chapter, or the whole document. Every share
-            is end-to-end encrypted with a one-time key — we can't read it,
-            and neither can anyone else.
-          </p>
-          <div class="e2e-grid">
-            <div class="e2e-step">
-              <span class="e2e-step__num">1</span>
-              <p>You seal it on your device.</p>
-            </div>
-            <div class="e2e-step">
-              <span class="e2e-step__num">2</span>
-              <p>A key is born. Shown once. Never stored.</p>
-            </div>
-            <div class="e2e-step">
-              <span class="e2e-step__num">3</span>
-              <p>Only the recipient's Feya can break the seal.</p>
-            </div>
-          </div>
-        </div>
-        <div class="page__visual page__visual--center">
-          <button class="wax-seal" id="wax-seal" type="button" aria-label="Press wax seal">
-            <svg viewBox="0 0 120 120" aria-hidden="true">
-              <defs>
-                <radialGradient id="wax-grad" cx="35%" cy="35%">
-                  <stop offset="0%" stop-color="#E07B5A" />
-                  <stop offset="60%" stop-color="#B85C38" />
-                  <stop offset="100%" stop-color="#7A3A1F" />
-                </radialGradient>
-              </defs>
-              <circle cx="60" cy="60" r="52" fill="url(#wax-grad)" />
-              <circle cx="60" cy="60" r="46" fill="none" stroke="rgba(0,0,0,.15)" stroke-width="1" stroke-dasharray="2 3" />
-              <text x="60" y="74" text-anchor="middle" font-family="serif" font-size="44" font-weight="700" fill="#3A1A0D" font-style="italic">F</text>
-            </svg>
-          </button>
-          <p class="seal-caption">tap the seal</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==================== 6. DOWNLOAD ==================== -->
-    <section class="page page--download" data-page="06" data-title="Download">
-      <div class="page__inner page--center">
-        <p class="eyebrow eyebrow--accent">06 · Download</p>
-        <h2 class="section-title">Take it <em>home</em>.</h2>
-        <p class="body-text body-text--center">
-          Feya PDF is free, open-source, and weighs less than a single photo on your phone.
-          No accounts. No ads. Just a good reader.
-        </p>
-
-        <div class="download-card">
-          <a href="#" class="play-badge" aria-label="Get it on Google Play">
-            <svg viewBox="0 0 180 54" aria-hidden="true">
-              <rect width="180" height="54" rx="8" fill="#2C2416" />
-              <g transform="translate(14, 12)" fill="#F5F0E8">
-                <path d="M0 0 L18 15 L0 30 Z" />
-                <path d="M0 0 L13 0 L18 5 L13 10 L0 0 Z" opacity=".7" />
-                <path d="M0 30 L13 30 L18 25 L13 20 L0 30 Z" opacity=".7" />
-              </g>
-              <text x="50" y="22" fill="#F5F0E8" font-family="Inter, sans-serif" font-size="9">GET IT ON</text>
-              <text x="50" y="40" fill="#F5F0E8" font-family="Inter, sans-serif" font-size="18" font-weight="600">Google Play</text>
-            </svg>
-          </a>
-
-          <div class="download-meta">
-            <p class="download-meta__row">
-              <span class="download-meta__label">APK</span>
-              <a href="/releases/feyapdf-v1.0.apk" class="download-link" id="apk-link">feyapdf-v1.0.apk · 4.2 MB</a>
-            </p>
-            <p class="download-meta__row">
-              <span class="download-meta__label">SHA-256</span>
-              <code class="download-meta__hash">a7f3…d92c</code>
-            </p>
-            <p class="download-meta__row">
-              <span class="download-meta__label">Min Android</span>
-              <span>8.0 (API 26)</span>
-            </p>
-          </div>
-
-          <div class="qr-wrap" aria-label="QR code">
-            <div class="qr">
-              <div class="qr__grid" id="qr-grid"></div>
-              <span class="qr__caption">scan</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==================== 7. EMBER ==================== -->
-    <section class="page page--ember" data-page="07" data-title="Ember">
-      <div class="page__inner page--center page--ember-inner">
-        <p class="eyebrow eyebrow--accent eyebrow--muted">07 · Ember</p>
-        <h2 class="section-title section-title--quiet">
-          When you're done,<br/>dim the lamp.
-        </h2>
-        <p class="body-text body-text--center body-text--muted">
-          A reader should know when to stop reading.
-          <br />Feya saves your place, gently.
-        </p>
-
-        <button class="ember" id="ember" type="button" aria-label="Relight the lamp">
-          <span class="ember__coal" aria-hidden="true"></span>
-          <span class="ember__halo" aria-hidden="true"></span>
-        </button>
-        <p class="ember-hint">click the ember to relight</p>
-
-        <footer class="footer">
-          <p class="footer__brand">Feya PDF · The Apprentice's Desk</p>
-          <nav class="footer__nav" aria-label="Footer">
-            <a href="/privacy">Privacy</a>
-            <a href="https://github.com/feyapdf/feya" rel="noopener" target="_blank">Source</a>
-            <a href="mailto:hello@feyapdf.com">Contact</a>
-            <a href="#" data-shortcut>Keyboard shortcuts</a>
-          </nav>
-          <p class="footer__small">No accounts. No ads. No cloud you don't choose.</p>
-        </footer>
-      </div>
-    </section>
-  </main>
-
-  <!-- Ghost cursor trail -->
-  <div id="cursor-trail" class="cursor-trail" aria-hidden="true"></div>
-
-  <!-- Konami / crayon overlay -->
-  <div id="crayon-banner" class="crayon-banner" hidden>
-    <span>🌈 crayon mode</span>
-  </div>
-
-  <!-- Runic overlay (when typing "freya") -->
-  <div id="runic-flash" class="runic-flash" aria-hidden="true"></div>
-
-  <!-- Keyboard shortcuts modal -->
-  <dialog id="shortcuts" class="shortcuts">
-    <form method="dialog">
-      <h3>Shortcuts</h3>
-      <ul>
-        <li><kbd>/</kbd> Search</li>
-        <li><kbd>j</kbd> / <kbd>k</kbd> Next / previous page</li>
-        <li><kbd>+</kbd> / <kbd>-</kbd> Zoom in / out</li>
-        <li><kbd>p</kbd> Print</li>
-        <li><kbd>d</kbd> Dark / paper mode</li>
-        <li><kbd>Esc</kbd> Close dialogs</li>
-      </ul>
-      <p class="shortcuts__easter">Easter eggs: Konami · type "freya" · <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd> · click the title 5×</p>
-      <button class="hud-btn" value="close">Close</button>
-    </form>
-  </dialog>
-
-  <script type="importmap">
-{
-  "imports": {
-    "gsap": "https://cdn.jsdelivr.net/npm/gsap@3.12.5/+esm",
-    "gsap/ScrollTrigger": "https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js",
-    "lenis": "https://cdn.jsdelivr.net/npm/lenis@1.1.18/+esm",
-    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/+esm"
-  }
-}
-</script>
-<script type="module">/* =====================================================================
-   Freya PDF — The Apprentice's Desk
-   Main entry: Lenis smooth scroll, GSAP ScrollTrigger page turns,
-   all interactions, easter eggs, search palette, zoom, etc.
-   Upgraded: scroll-pinned section transitions, drag-to-draw ink mode,
-   multi-stage discard, touch swipe nav, vibration, real-looking QR.
-   ===================================================================== */
-
-import './style.css';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import Lenis from 'lenis';
-/* =====================================================================
-   Freya PDF — Three.js Hero Scene
-   Low-poly cel-shaded study desk, lamp as key light, tablet with PDF.
-   Upgraded: dust motes, glow halo, paper stack, eraser, paperclip,
-   plant sway, notebook page-turn, mood-based material swap.
-   ===================================================================== */
-
-import * as THREE from 'three';
-
-/* ---------------- Color palette (matches CSS) ---------------- */
-const PALETTE = {
-  bg:        new THREE.Color('#E8DDC4'),
-  bgDark:    new THREE.Color('#1A1814'),
-  wood:      new THREE.Color('#8B6B3D'),
-  woodDark:  new THREE.Color('#5C4523'),
-  woodLight: new THREE.Color('#B89060'),
-  paper:     new THREE.Color('#F0E5CC'),
-  paperWarm: new THREE.Color('#E6D5A8'),
-  paperCool: new THREE.Color('#E8DDC4'),
-  brass:     new THREE.Color('#C4A962'),
-  brassDark: new THREE.Color('#8A7340'),
-  sage:      new THREE.Color('#7D8B6F'),
-  rust:      new THREE.Color('#B85C38'),
-  teal:      new THREE.Color('#2A5B5C'),
-  ink:       new THREE.Color('#2C2416'),
-  cream:     new THREE.Color('#E8D9B8'),
-  highlight: new THREE.Color('#E8B4BC'),
-  lamp:      new THREE.Color('#FFD08A'),
-  lampGlow:  new THREE.Color('#FFE4B0'),
-  shadow:    new THREE.Color('#2A1E10'),
-  leaf:      new THREE.Color('#5A6B4F'),
-  leafLight: new THREE.Color('#7B8A65'),
-  pot:       new THREE.Color('#9C7250'),
-  dust:      new THREE.Color('#FFF1C9'),
-};
-
-/* ---------------- Cel-shaded material ---------------- */
-function celMaterial({ color, emissive = 0x000000, emissiveIntensity = 0, side = THREE.FrontSide } = {}) {
-  return new THREE.MeshToonMaterial({
-    color: color instanceof THREE.Color ? color : new THREE.Color(color),
-    emissive: new THREE.Color(emissive),
-    emissiveIntensity,
-    side,
-  });
-}
-
-/* ---------------- Simple geometry helpers ---------------- */
-function box(w, h, d, mat) {
-  return new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
-}
-function cyl(rt, rb, h, seg, mat) {
-  return new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), mat);
-}
-
-/* ---------------- Procedural radial-gradient texture (lamp glow) ---------------- */
-function makeGlowTexture(size = 256) {
-  const c = document.createElement('canvas');
-  c.width = c.height = size;
-  const ctx = c.getContext('2d');
-  const g = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
-  g.addColorStop(0,   'rgba(255, 220, 160, 1.0)');
-  g.addColorStop(0.25,'rgba(255, 200, 130, 0.55)');
-  g.addColorStop(0.5, 'rgba(255, 180, 110, 0.20)');
-  g.addColorStop(1,   'rgba(255, 180, 110, 0)');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, size, size);
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  return t;
-}
-
-/* ---------------- Soft disc (sphere) used for fake volumetric light cone ---------------- */
-function makeLightConeTexture(size = 256) {
-  const c = document.createElement('canvas');
-  c.width = c.height = size;
-  const ctx = c.getContext('2d');
-  const g = ctx.createRadialGradient(size/2, 0, 0, size/2, 0, size/2);
-  g.addColorStop(0,   'rgba(255, 220, 160, 0.45)');
-  g.addColorStop(0.5, 'rgba(255, 200, 130, 0.12)');
-  g.addColorStop(1,   'rgba(255, 200, 130, 0)');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, size, size);
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  return t;
-}
-
-/* =====================================================================
-   GEOMETRY BUILDERS
-   ===================================================================== */
-
-/* ---------------- Build desk ---------------- */
-function buildDesk() {
-  const group = new THREE.Group();
-  group.name = 'Desk';
-
-  const wood = celMaterial({ color: PALETTE.wood });
-  const woodDark = celMaterial({ color: PALETTE.woodDark });
-  const woodLight = celMaterial({ color: PALETTE.woodLight });
-
-  // Tabletop
-  const top = box(5.2, 0.12, 3.4, wood);
-  top.position.y = 0;
-  top.castShadow = true;
-  top.receiveShadow = true;
-  group.add(top);
-
-  // Wood grain stripes (subtle, darker)
-  for (let i = 0; i < 7; i++) {
-    const stripe = box(5.0, 0.005, 0.025, woodDark);
-    stripe.position.set((Math.random()-0.5)*0.3, 0.062, -1.4 + i * 0.42);
-    group.add(stripe);
-  }
-  // Light grain (highlights)
-  for (let i = 0; i < 4; i++) {
-    const stripe = box(5.0, 0.005, 0.018, woodLight);
-    stripe.position.set((Math.random()-0.5)*0.4, 0.063, -1.2 + i * 0.7);
-    group.add(stripe);
-  }
-
-  // Edge bevel — thin brass strip on the front edge
-  const edge = box(5.2, 0.02, 0.02, celMaterial({ color: PALETTE.brassDark }));
-  edge.position.set(0, 0.04, 1.7);
-  group.add(edge);
-
-  // 4 legs
-  const legGeo = new THREE.BoxGeometry(0.16, 1.4, 0.16);
-  const legPositions = [
-    [ 2.4, -0.76,  1.5],
-    [-2.4, -0.76,  1.5],
-    [ 2.4, -0.76, -1.5],
-    [-2.4, -0.76, -1.5],
-  ];
-  for (const [x, y, z] of legPositions) {
-    const leg = new THREE.Mesh(legGeo, woodDark);
-    leg.position.set(x, y, z);
-    leg.castShadow = true;
-    group.add(leg);
-  }
-
-  // Apron strip
-  const apron = box(5.0, 0.18, 0.05, woodLight);
-  apron.position.set(0, -0.16, 1.55);
-  group.add(apron);
-  const apron2 = apron.clone();
-  apron2.position.set(0, -0.16, -1.55);
-  group.add(apron2);
-
-  // Cross brace between front legs
-  const brace = box(4.6, 0.08, 0.06, woodDark);
-  brace.position.set(0, -0.55, 1.5);
-  group.add(brace);
-
-  return group;
-}
-
-/* ---------------- Build notebook ---------------- */
-function buildNotebook() {
-  const g = new THREE.Group();
-  g.name = 'Notebook';
-
-  const cover = celMaterial({ color: PALETTE.teal });
-  const page = celMaterial({ color: PALETTE.paper });
-  const ribbon = celMaterial({ color: PALETTE.rust });
-
-  // Cover
-  const c = box(0.9, 0.06, 1.2, cover);
-  c.position.y = 0.06;
-  g.add(c);
-
-  // Pages
-  const p = box(0.86, 0.04, 1.15, page);
-  p.position.y = 0.08;
-  g.add(p);
-
-  // Ribbon
-  const r = box(0.06, 0.02, 0.7, ribbon);
-  r.position.set(0.32, 0.1, 0.2);
-  g.add(r);
-
-  // Embossed line
-  const emboss = box(0.7, 0.005, 0.02, celMaterial({ color: PALETTE.cream }));
-  emboss.position.set(0, 0.095, -0.4);
-  g.add(emboss);
-
-  // Decorative monogram dot
-  const monogram = new THREE.Mesh(
-    new THREE.CircleGeometry(0.08, 16),
-    celMaterial({ color: PALETTE.brass, emissive: PALETTE.brass, emissiveIntensity: 0.15 })
-  );
-  monogram.rotation.x = -Math.PI / 2;
-  monogram.position.set(0, 0.094, 0.2);
-  g.add(monogram);
-
-  // Sub-group containing a flippable "page" that occasionally turns
-  const pageGroup = new THREE.Group();
-  pageGroup.name = 'PageGroup';
-  const turnPage = box(0.78, 0.005, 1.10, page);
-  turnPage.position.y = 0.092;
-  pageGroup.add(turnPage);
-  g.add(pageGroup);
-  g.userData.pageGroup = pageGroup;
-
-  return g;
-}
-
-/* ---------------- Build tablet ---------------- */
-function buildTablet(pdfTexture) {
-  const g = new THREE.Group();
-  g.name = 'Tablet';
-
-  const bezel = celMaterial({ color: PALETTE.ink });
-  const screen = new THREE.MeshBasicMaterial({ map: pdfTexture });
-
-  // Body
-  const body = box(1.4, 0.04, 1.9, bezel);
-  body.position.y = 0.08;
-  g.add(body);
-
-  // Screen
-  const screenMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.28, 1.76), screen);
-  screenMesh.rotation.x = -Math.PI / 2;
-  screenMesh.position.y = 0.101;
-  g.add(screenMesh);
-
-  // Bezel rim
-  const rim = box(1.32, 0.005, 1.82, celMaterial({ color: PALETTE.brassDark }));
-  rim.position.y = 0.103;
-  g.add(rim);
-
-  // Home button
-  const home = new THREE.Mesh(
-    new THREE.CircleGeometry(0.04, 16),
-    celMaterial({ color: PALETTE.brass })
-  );
-  home.rotation.x = -Math.PI / 2;
-  home.position.set(0, 0.1035, -0.85);
-  g.add(home);
-
-  // Top speaker slit
-  const speaker = box(0.5, 0.003, 0.015, celMaterial({ color: PALETTE.ink }));
-  speaker.position.set(0, 0.1035, 0.85);
-  g.add(speaker);
-
-  return g;
-}
-
-/* ---------------- Build tea cup with better steam ---------------- */
-function buildTeaCup() {
-  const g = new THREE.Group();
-  g.name = 'TeaCup';
-
-  const cup = celMaterial({ color: PALETTE.cream });
-  const tea = celMaterial({ color: PALETTE.paperWarm });
-
-  // Body
-  const body = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.22, 0.16, 0.32, 20, 1, true),
-    cup
-  );
-  body.position.y = 0.18;
-  g.add(body);
-
-  // Bottom
-  const bottom = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.16, 0.16, 0.02, 20),
-    cup
-  );
-  bottom.position.y = 0.02;
-  g.add(bottom);
-
-  // Tea surface
-  const liquid = new THREE.Mesh(
-    new THREE.CircleGeometry(0.21, 20),
-    tea
-  );
-  liquid.rotation.x = -Math.PI / 2;
-  liquid.position.y = 0.34;
-  g.add(liquid);
-
-  // Handle
-  const handle = new THREE.Mesh(
-    new THREE.TorusGeometry(0.08, 0.022, 8, 14, Math.PI),
-    cup
-  );
-  handle.position.set(0.22, 0.18, 0);
-  handle.rotation.set(0, 0, Math.PI / 2);
-  g.add(handle);
-
-  // Saucer
-  const s = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.32, 0.30, 0.03, 28),
-    cup
-  );
-  s.position.y = 0.01;
-  g.add(s);
-  const sInner = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.20, 0.20, 0.005, 28),
-    new THREE.MeshToonMaterial({ color: PALETTE.paperWarm })
-  );
-  sInner.position.y = 0.025;
-  g.add(sInner);
-
-  // Tea-bag string + tag (small detail)
-  const string = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.002, 0.002, 0.18, 4),
-    new THREE.MeshBasicMaterial({ color: 0xFFFFFF })
-  );
-  string.position.set(-0.05, 0.42, 0.0);
-  g.add(string);
-  const tag = box(0.04, 0.02, 0.06, celMaterial({ color: PALETTE.brass }));
-  tag.position.set(-0.05, 0.33, 0.0);
-  g.add(tag);
-
-  // Steam — many small wisps, animated in update loop
-  const steamGroup = new THREE.Group();
-  steamGroup.name = 'Steam';
-  const WISP_COUNT = 8;
-  for (let i = 0; i < WISP_COUNT; i++) {
-    const wisp = new THREE.Mesh(
-      new THREE.SphereGeometry(0.035 + Math.random() * 0.025, 6, 6),
-      new THREE.MeshBasicMaterial({
-        color: PALETTE.dust,
-        transparent: true,
-        opacity: 0,
-        depthWrite: false,
-      })
-    );
-    wisp.userData.baseY = 0.40;
-    wisp.userData.life = Math.random();      // 0..1 starting point in cycle
-    wisp.userData.speed = 0.15 + Math.random() * 0.2;
-    wisp.userData.phase = Math.random() * Math.PI * 2;
-    wisp.userData.driftX = (Math.random() - 0.5) * 0.04;
-    wisp.userData.driftZ = (Math.random() - 0.5) * 0.04;
-    wisp.userData.scale = 0.5 + Math.random() * 0.5;
-    steamGroup.add(wisp);
-  }
-  g.add(steamGroup);
-
-  return g;
-}
-
-/* ---------------- Build highlighter markers ---------------- */
-function buildHighlighters() {
-  const g = new THREE.Group();
-  g.name = 'Highlighters';
-
-  const colors = [PALETTE.brass, PALETTE.rust, PALETTE.sage, PALETTE.teal];
-  colors.forEach((c, i) => {
-    const cap = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.045, 0.045, 0.10, 12),
-      new THREE.MeshToonMaterial({ color: c })
-    );
-    cap.position.set(0, 0.07, 0);
-
-    const body = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.04, 0.04, 0.18, 12),
-      new THREE.MeshToonMaterial({ color: PALETTE.cream })
-    );
-    body.position.set(0, -0.04, 0);
-
-    const tip = new THREE.Mesh(
-      new THREE.ConeGeometry(0.04, 0.06, 12),
-      new THREE.MeshToonMaterial({ color: PALETTE.ink })
-    );
-    tip.position.set(0, -0.16, 0);
-    tip.rotation.x = Math.PI;
-
-    const marker = new THREE.Group();
-    marker.add(cap, body, tip);
-    marker.rotation.z = Math.PI / 2;
-    marker.position.set(1.6 + i * 0.02, 0.08, 0.4 - i * 0.18);
-    g.add(marker);
-  });
-
-  return g;
-}
-
-/* ---------------- Build lamp with glow halo ---------------- */
-function buildLamp() {
-  const g = new THREE.Group();
-  g.name = 'Lamp';
-
-  const brass = celMaterial({ color: PALETTE.brass });
-  const brassDark = celMaterial({ color: PALETTE.brassDark });
-  const shade = celMaterial({
-    color: PALETTE.lampGlow,
-    emissive: PALETTE.lamp,
-    emissiveIntensity: 0.45,
-  });
-
-  // Base
-  const base = cyl(0.22, 0.26, 0.06, 18, brassDark);
-  base.position.y = 0.08;
-  g.add(base);
-  // Small ridge on base
-  const ridge = cyl(0.24, 0.24, 0.015, 18, brass);
-  ridge.position.y = 0.115;
-  g.add(ridge);
-
-  // Stem
-  const stem1 = cyl(0.025, 0.025, 0.5, 10, brass);
-  stem1.position.set(0, 0.36, 0);
-  g.add(stem1);
-
-  const stem2 = cyl(0.022, 0.025, 0.4, 10, brass);
-  stem2.position.set(0, 0.82, 0);
-  g.add(stem2);
-
-  // Joint between stem segments
-  const joint = new THREE.Mesh(
-    new THREE.SphereGeometry(0.035, 10, 8),
-    brassDark
-  );
-  joint.position.set(0, 0.6, 0);
-  g.add(joint);
-
-  // Shade
-  const shadeMesh = new THREE.Mesh(
-    new THREE.ConeGeometry(0.32, 0.30, 20, 1, true),
-    shade
-  );
-  shadeMesh.position.set(0, 1.18, 0);
-  shadeMesh.rotation.x = Math.PI;
-  g.add(shadeMesh);
-
-  // Inner shade highlight (lighter color, slightly inset)
-  const innerShade = new THREE.Mesh(
-    new THREE.ConeGeometry(0.30, 0.28, 20, 1, true),
-    celMaterial({
-      color: PALETTE.lampGlow,
-      emissive: PALETTE.lamp,
-      emissiveIntensity: 0.8,
-      side: THREE.BackSide,
-    })
-  );
-  innerShade.position.set(0, 1.19, 0);
-  innerShade.rotation.x = Math.PI;
-  g.add(innerShade);
-
-  // Bulb
-  const bulb = new THREE.Mesh(
-    new THREE.SphereGeometry(0.06, 12, 12),
-    new THREE.MeshBasicMaterial({
-      color: PALETTE.lamp,
-      transparent: true,
-      opacity: 0.95,
-    })
-  );
-  bulb.position.set(0, 1.06, 0);
-  bulb.name = 'Bulb';
-  g.add(bulb);
-
-  // Glow halo (billboard)
-  const glowTex = makeGlowTexture(256);
-  const glowMat = new THREE.SpriteMaterial({
-    map: glowTex,
-    color: 0xFFE0A8,
-    transparent: true,
-    opacity: 1,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-  });
-  const glow = new THREE.Sprite(glowMat);
-  glow.scale.set(1.4, 1.4, 1);
-  glow.position.set(0, 1.06, 0);
-  glow.name = 'Glow';
-  g.add(glow);
-
-  // Light cone below the shade (large additive disc)
-  const coneTex = makeLightConeTexture(256);
-  const coneMat = new THREE.MeshBasicMaterial({
-    map: coneTex,
-    color: 0xFFE0A8,
-    transparent: true,
-    opacity: 0.35,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-    side: THREE.DoubleSide,
-  });
-  const cone = new THREE.Mesh(
-    new THREE.PlaneGeometry(2.4, 2.0),
-    coneMat
-  );
-  cone.position.set(0, 0.2, 0);
-  cone.rotation.x = -Math.PI / 2;
-  cone.name = 'LightCone';
-  g.add(cone);
-
-  // Knob on top
-  const knob = new THREE.Mesh(
-    new THREE.SphereGeometry(0.04, 10, 8),
-    brass
-  );
-  knob.position.set(0, 1.36, 0);
-  g.add(knob);
-
-  // Pull-chain (tiny detail)
-  const chain = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.004, 0.004, 0.10, 4),
-    new THREE.MeshBasicMaterial({ color: 0xC9A24A })
-  );
-  chain.position.set(0.20, 1.0, 0.0);
-  g.add(chain);
-  const chainBead = new THREE.Mesh(
-    new THREE.SphereGeometry(0.012, 6, 6),
-    new THREE.MeshBasicMaterial({ color: 0x8A7340 })
-  );
-  chainBead.position.set(0.20, 0.94, 0.0);
-  g.add(chainBead);
-
-  return g;
-}
-
-/* ---------------- Build small plant with sway ---------------- */
-function buildPlant() {
-  const g = new THREE.Group();
-  g.name = 'Plant';
-
-  const potMat = celMaterial({ color: PALETTE.pot });
-  const leafMat = celMaterial({ color: PALETTE.leaf });
-  const leafLight = celMaterial({ color: PALETTE.leafLight });
-
-  // Pot
-  const pot = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.18, 0.14, 0.28, 14),
-    potMat
-  );
-  pot.position.y = 0.14;
-  g.add(pot);
-
-  // Pot rim
-  const rim = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.185, 0.185, 0.02, 14),
-    celMaterial({ color: PALETTE.woodLight })
-  );
-  rim.position.y = 0.27;
-  g.add(rim);
-
-  // Soil
-  const soil = new THREE.Mesh(
-    new THREE.CircleGeometry(0.17, 14),
-    new THREE.MeshToonMaterial({ color: PALETTE.woodDark })
-  );
-  soil.rotation.x = -Math.PI / 2;
-  soil.position.y = 0.28;
-  g.add(soil);
-
-  // Leaves (low-poly cones in a "leaves" group that sways)
-  const leavesGroup = new THREE.Group();
-  leavesGroup.name = 'Leaves';
-  const leafShapes = [
-    { x:  0.00, z:  0.00, ry: 0.30, rz: 0.0,  mat: leafMat },
-    { x:  0.10, z:  0.05, ry: 0.50, rz: 0.4,  mat: leafLight },
-    { x: -0.08, z:  0.08, ry: 0.40, rz: -0.3, mat: leafMat },
-    { x:  0.05, z: -0.10, ry: 0.55, rz: 0.2,  mat: leafLight },
-    { x: -0.10, z: -0.04, ry: 0.45, rz: -0.4, mat: leafMat },
-    { x:  0.12, z: -0.04, ry: 0.35, rz: 0.5,  mat: leafMat },
-  ];
-  for (const l of leafShapes) {
-    const leaf = new THREE.Mesh(
-      new THREE.ConeGeometry(0.05, l.ry, 5),
-      l.mat
-    );
-    leaf.position.set(l.x, 0.28 + l.ry / 2, l.z);
-    leaf.rotation.z = l.rz;
-    leavesGroup.add(leaf);
-  }
-  g.add(leavesGroup);
-  g.userData.leavesGroup = leavesGroup;
-
-  return g;
-}
-
-/* ---------------- Build pencil ---------------- */
-function buildPencil() {
-  const g = new THREE.Group();
-  g.name = 'Pencil';
-
-  const shaft = celMaterial({ color: PALETTE.brass });
-  const tipWood = celMaterial({ color: PALETTE.paperWarm });
-  const tipLead = celMaterial({ color: PALETTE.ink });
-  const eraser = celMaterial({ color: PALETTE.rust });
-
-  const shaftMesh = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.025, 0.025, 0.7, 8),
-    shaft
-  );
-  g.add(shaftMesh);
-
-  const woodTip = new THREE.Mesh(
-    new THREE.ConeGeometry(0.025, 0.05, 8),
-    tipWood
-  );
-  woodTip.position.y = 0.375;
-  woodTip.rotation.x = Math.PI;
-  g.add(woodTip);
-
-  const leadTip = new THREE.Mesh(
-    new THREE.ConeGeometry(0.008, 0.02, 6),
-    tipLead
-  );
-  leadTip.position.y = 0.41;
-  leadTip.rotation.x = Math.PI;
-  g.add(leadTip);
-
-  const eraserMesh = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.028, 0.028, 0.05, 8),
-    eraser
-  );
-  eraserMesh.position.y = -0.375;
-  g.add(eraserMesh);
-
-  const ferrule = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.028, 0.028, 0.04, 8),
-    celMaterial({ color: PALETTE.brassDark })
-  );
-  ferrule.position.y = -0.33;
-  g.add(ferrule);
-
-  g.rotation.z = Math.PI / 2;
-  g.position.y = 0.06;
-  return g;
-}
-
-/* ---------------- Build book stack ---------------- */
-function buildBookStack() {
-  const g = new THREE.Group();
-  g.name = 'BookStack';
-
-  const colors = [PALETTE.rust, PALETTE.sage, PALETTE.brass];
-  colors.forEach((c, i) => {
-    const book = box(0.7, 0.08, 0.5, celMaterial({ color: c }));
-    book.position.y = 0.05 + i * 0.085;
-    g.add(book);
-
-    const pages = box(0.66, 0.07, 0.46, celMaterial({ color: PALETTE.paper }));
-    pages.position.y = 0.05 + i * 0.085;
-    g.add(pages);
-
-    // Tiny title bar on spine
-    const spine = box(0.66, 0.04, 0.005, celMaterial({ color: PALETTE.brassDark }));
-    spine.position.set(0, 0.05 + i * 0.085, 0.252);
-    g.add(spine);
-  });
-
-  return g;
-}
-
-/* ---------------- Build a stack of loose papers ---------------- */
-function buildPaperStack() {
-  const g = new THREE.Group();
-  g.name = 'PaperStack';
-
-  // Slightly skewed pile of paper sheets
-  for (let i = 0; i < 5; i++) {
-    const sheet = box(0.7, 0.008, 0.5, celMaterial({ color: i % 2 ? PALETTE.paper : PALETTE.paperWarm }));
-    sheet.position.set((Math.random() - 0.5) * 0.04, 0.005 + i * 0.012, (Math.random() - 0.5) * 0.04);
-    sheet.rotation.y = (Math.random() - 0.5) * 0.18;
-    g.add(sheet);
-  }
-
-  // Hand-written lines on top sheet (subtle)
-  for (let i = 0; i < 4; i++) {
-    const line = box(0.4, 0.001, 0.012, celMaterial({ color: PALETTE.ink }));
-    line.position.set(-0.05, 0.07, -0.1 + i * 0.05);
-    line.rotation.y = (Math.random() - 0.5) * 0.1;
-    g.add(line);
-  }
-
-  return g;
-}
-
-/* ---------------- Build eraser block ---------------- */
-function buildEraser() {
-  const g = new THREE.Group();
-  g.name = 'Eraser';
-
-  const body = box(0.16, 0.06, 0.08, celMaterial({ color: PALETTE.rust }));
-  body.position.y = 0.03;
-  g.add(body);
-
-  // Sleeve
-  const sleeve = box(0.17, 0.02, 0.09, celMaterial({ color: PALETTE.cream }));
-  sleeve.position.y = 0.06;
-  g.add(sleeve);
-
-  return g;
-}
-
-/* ---------------- Build a paperclip ---------------- */
-function buildPaperclip() {
-  const g = new THREE.Group();
-  g.name = 'Paperclip';
-
-  const mat = new THREE.MeshStandardMaterial({
-    color: 0xC0C0C0,
-    metalness: 0.6,
-    roughness: 0.4,
-    emissive: 0x444444,
-    emissiveIntensity: 0.05,
-  });
-
-  // Build a stylized paperclip with a tube
-  const pts = [
-    new THREE.Vector3(-0.06, 0,  0.02),
-    new THREE.Vector3(-0.06, 0, -0.02),
-    new THREE.Vector3( 0.04, 0, -0.02),
-    new THREE.Vector3( 0.04, 0,  0.02),
-    new THREE.Vector3(-0.04, 0,  0.02),
-    new THREE.Vector3(-0.04, 0, -0.005),
-  ];
-  const curve = new THREE.CatmullRomCurve3(pts, false, true, 0.0);
-  const tubeGeo = new THREE.TubeGeometry(curve, 32, 0.006, 6, false);
-  const tube = new THREE.Mesh(tubeGeo, mat);
-  tube.rotation.x = Math.PI / 2;
-  g.add(tube);
-
-  g.rotation.set(-0.3, 0.4, 0.2);
-  g.position.y = 0.012;
-  return g;
-}
-
-/* ---------------- Build floating dust motes (atmospheric particles) ---------------- */
-function buildDustMotes(count = 110) {
-  const g = new THREE.Group();
-  g.name = 'DustMotes';
-
-  // Generate a tiny round texture procedurally
-  const c = document.createElement('canvas');
-  c.width = c.height = 32;
-  const ctx = c.getContext('2d');
-  const grad = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
-  grad.addColorStop(0, 'rgba(255,240,200,1)');
-  grad.addColorStop(0.5, 'rgba(255,240,200,0.3)');
-  grad.addColorStop(1, 'rgba(255,240,200,0)');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, 32, 32);
-  const tex = new THREE.CanvasTexture(c);
-
-  const geo = new THREE.BufferGeometry();
-  const positions = new Float32Array(count * 3);
-  const basePos = new Float32Array(count * 3);
-  const seeds = new Float32Array(count * 3); // phase, speed, amp
-
-  for (let i = 0; i < count; i++) {
-    const x = (Math.random() - 0.5) * 6;
-    const y = Math.random() * 3.0;        // 0..3
-    const z = (Math.random() - 0.5) * 3.5;
-    positions[i*3+0] = x; basePos[i*3+0] = x;
-    positions[i*3+1] = y; basePos[i*3+1] = y;
-    positions[i*3+2] = z; basePos[i*3+2] = z;
-    seeds[i*3+0] = Math.random() * Math.PI * 2;        // phase
-    seeds[i*3+1] = 0.05 + Math.random() * 0.12;       // speed
-    seeds[i*3+2] = 0.05 + Math.random() * 0.12;       // amp
-  }
-
-  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  geo.setAttribute('aBase',    new THREE.BufferAttribute(basePos, 3));
-  geo.setAttribute('aSeed',    new THREE.BufferAttribute(seeds, 3));
-
-  const mat = new THREE.PointsMaterial({
-    map: tex,
-    color: 0xFFE9B8,
-    size: 0.045,
-    transparent: true,
-    opacity: 0.65,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-    sizeAttenuation: true,
-  });
-
-  const points = new THREE.Points(geo, mat);
-  g.add(points);
-  g.userData.points = points;
-  return g;
-}
-
-/* =====================================================================
-   PDF CanvasTexture — drawn dynamically on the tablet screen.
-   ===================================================================== */
-class PDFTexture {
-  constructor(width = 512, height = 768) {
-    this.canvas = document.createElement('canvas');
-    this.canvas.width = width;
-    this.canvas.height = height;
-    this.ctx = this.canvas.getContext('2d');
-    this.texture = new THREE.CanvasTexture(this.canvas);
-    this.texture.colorSpace = THREE.SRGBColorSpace;
-    this.texture.anisotropy = 4;
-    this.width = width;
-    this.height = height;
-    this.time = 0;
-    this.draw(0);
-  }
-  draw(t) {
-    const { ctx, width: w, height: h } = this;
-    // Paper background with warm gradient
-    const grad = ctx.createLinearGradient(0, 0, 0, h);
-    grad.addColorStop(0, '#F7EFD9');
-    grad.addColorStop(1, '#EBDFC1');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, w, h);
-
-    // Subtle texture dots
-    ctx.fillStyle = 'rgba(44,36,22,0.025)';
-    for (let i = 0; i < 80; i++) {
-      const x = (i * 37) % w;
-      const y = (i * 53) % h;
-      ctx.fillRect(x, y, 1, 1);
+  <!-- GSAP + ScrollTrigger -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js" defer></script>
+
+  <!-- Lenis -->
+  <script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js" defer></script>
+
+  <style>
+    /* ── Reset ────────────────────────────────────────── */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
 
-    // Margin line
-    ctx.strokeStyle = 'rgba(184, 92, 56, 0.4)';
-    ctx.lineWidth = 0.6;
-    ctx.beginPath();
-    ctx.moveTo(56, 0);
-    ctx.lineTo(56, h);
-    ctx.stroke();
-
-    // Header
-    ctx.fillStyle = '#2C2416';
-    ctx.font = 'bold 18px serif';
-    ctx.textBaseline = 'top';
-    ctx.fillText('Chapter II — On Careful Reading', 72, 32);
-
-    // Underline
-    ctx.strokeStyle = '#7D8B6F';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(72, 60);
-    ctx.lineTo(260, 60);
-    ctx.stroke();
-
-    // Body text — animated "reading" progress
-    ctx.fillStyle = '#4A3F2A';
-    ctx.font = '13px serif';
-    const lineHeight = 18;
-    const startY = 80;
-    const lineWidths = [0.92, 0.88, 0.95, 0.75, 0.90, 0.85, 0.93, 0.80, 0.95, 0.70,
-                        0.90, 0.86, 0.92, 0.78, 0.95, 0.88, 0.93, 0.82, 0.90, 0.85,
-                        0.95, 0.80, 0.92, 0.88, 0.94, 0.75, 0.90, 0.85, 0.93, 0.80];
-    for (let i = 0; i < 30; i++) {
-      const y = startY + i * lineHeight;
-      if (y > h - 80) break;
-      const lw = (w - 100) * lineWidths[i];
-      const progress = Math.min(1, Math.max(0, (t * 0.6 - i * 0.04)));
-      const drawnWidth = lw * progress;
-      if (drawnWidth > 0) {
-        ctx.fillStyle = '#4A3F2A';
-        ctx.fillRect(72, y, drawnWidth, 6);
-      }
+    html {
+      scroll-behavior: smooth;
     }
 
-    // Highlight on one line
-    if (t > 0.4) {
-      const hy = startY + 6 * lineHeight - 3;
-      ctx.fillStyle = 'rgba(232, 180, 188, 0.6)';
-      ctx.fillRect(70, hy, (w - 100) * 0.85, 12);
-      ctx.fillStyle = '#2C2416';
-      ctx.fillRect(72, hy + 2, (w - 100) * 0.85, 6);
+    body {
+      background-color: var(--bg);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
-    // Margin note (rotated)
-    ctx.save();
-    ctx.fillStyle = 'rgba(184, 92, 56, 0.85)';
-    ctx.font = 'italic 14px "Caveat", "Comic Sans MS", cursive';
-    ctx.translate(20, 0);
-    ctx.rotate(-Math.PI / 2);
-    ctx.fillText('a quiet place to think', -h + 60, 0);
-    ctx.restore();
-
-    // Page number
-    ctx.fillStyle = '#6B5F47';
-    ctx.font = '11px serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('— 14 —', w / 2, h - 32);
-    ctx.textAlign = 'left';
-
-    this.texture.needsUpdate = true;
-  }
-  update(dt) {
-    this.time += dt;
-    this.draw(this.time);
-  }
-}
-
-/* =====================================================================
-   Main scene class
-   ===================================================================== */
-export class DeskScene {
-  constructor(canvas) {
-    this.canvas = canvas;
-    this.mouse = { x: 0, y: 0, tx: 0, ty: 0 };
-    this.touch = { x: 0, y: 0, active: false };
-    this.target = { x: 0, y: 0, z: 0 };
-    this.idleAngle = 0;
-    this.lampIntensity = 1.0;
-    this.targetLampIntensity = 1.0;
-    this.scrollProgress = 0;
-    this.litAt = 0;
-    this.flickerPhase = 0;
-    this._init();
-    this._bindEvents();
-    this._animate(0);
-  }
-
-  _init() {
-    // Detect low-power / mobile → reduce particle counts
-    this.isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ||
-                    (window.innerWidth < 720);
-    this.dustCount = this.isMobile ? 30 : 80;
-    this.pixelRatio = Math.min(window.devicePixelRatio || 1, this.isMobile ? 1.5 : 2);
-
-    // Renderer
-    this.renderer = new THREE.WebGLRenderer({
-      canvas: this.canvas,
-      antialias: !this.isMobile,
-      alpha: true,
-      powerPreference: this.isMobile ? 'default' : 'high-performance',
-      stencil: false,
-      depth: true,
-    });
-    this.renderer.setPixelRatio(this.pixelRatio);
-    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.05;
-    this.renderer.shadowMap.enabled = !this.isMobile;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-    // Scene
-    this.scene = new THREE.Scene();
-    this.scene.background = null;
-    this.scene.fog = new THREE.Fog(PALETTE.bg, 8, 22);
-
-    // Camera
-    this.camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
-    this.cameraBase = new THREE.Vector3(0, 2.2, 5.6);
-    this.camera.position.copy(this.cameraBase);
-    this.camera.lookAt(0, 0.6, 0);
-
-    // Lights
-    this._setupLights();
-
-    // PDF texture on tablet
-    this.pdfTexture = new PDFTexture(512, 768);
-
-    // Build scene
-    this._buildScene();
-
-    // Initial size
-    this._resize();
-  }
-
-  _setupLights() {
-    // Ambient
-    this.ambient = new THREE.AmbientLight(PALETTE.bg, 0.25);
-    this.scene.add(this.ambient);
-
-    // Hemisphere
-    this.hemi = new THREE.HemisphereLight(0xE8DDC4, 0x2A1E10, 0.35);
-    this.scene.add(this.hemi);
-
-    // Lamp point light
-    this.lampPoint = new THREE.PointLight(PALETTE.lamp, 3.5, 8, 1.6);
-    this.lampPoint.position.set(-1.6, 1.2, 0.3);
-    this.lampPoint.castShadow = !this.isMobile;
-    this.lampPoint.shadow.mapSize.set(1024, 1024);
-    this.lampPoint.shadow.bias = -0.001;
-    this.scene.add(this.lampPoint);
-
-    // Lamp spot light
-    this.lampSpot = new THREE.SpotLight(
-      PALETTE.lamp,
-      4.0,
-      6,
-      Math.PI / 4,
-      0.5,
-      1.5
-    );
-    this.lampSpot.position.set(-1.6, 1.05, 0.3);
-    this.lampSpot.target.position.set(0.6, 0, 0.2);
-    this.lampSpot.castShadow = !this.isMobile;
-    this.lampSpot.shadow.mapSize.set(1024, 1024);
-    this.lampSpot.shadow.bias = -0.001;
-    this.scene.add(this.lampSpot);
-    this.scene.add(this.lampSpot.target);
-
-    // Rim light
-    this.rim = new THREE.DirectionalLight(0xFFD9A8, 0.18);
-    this.rim.position.set(3, 2, -2);
-    this.scene.add(this.rim);
-
-    // Subtle cool fill from below (simulates ambient bounce)
-    this.fill = new THREE.DirectionalLight(0xC8B89A, 0.10);
-    this.fill.position.set(-2, -1, 1);
-    this.scene.add(this.fill);
-  }
-
-  _buildScene() {
-    // Desk
-    this.desk = buildDesk();
-    this.scene.add(this.desk);
-
-    // Floor
-    const floorMat = new THREE.MeshToonMaterial({ color: PALETTE.bg });
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), floorMat);
-    floor.rotation.x = -Math.PI / 2;
-    floor.position.y = -1.5;
-    floor.receiveShadow = !this.isMobile;
-    this.scene.add(floor);
-
-    // Back wall
-    const wallMat = new THREE.MeshToonMaterial({ color: PALETTE.bg });
-    const wall = new THREE.Mesh(new THREE.PlaneGeometry(20, 10), wallMat);
-    wall.position.set(0, 1.5, -3);
-    wall.receiveShadow = !this.isMobile;
-    this.scene.add(wall);
-
-    // Tablet
-    this.tablet = buildTablet(this.pdfTexture.texture);
-    this.tablet.position.set(0.4, 0.08, 0.2);
-    this.tablet.rotation.y = -0.18;
-    this.scene.add(this.tablet);
-
-    // Notebook
-    this.notebook = buildNotebook();
-    this.notebook.position.set(-1.4, 0.08, -0.8);
-    this.notebook.rotation.y = 0.3;
-    this.scene.add(this.notebook);
-
-    // Tea cup
-    this.teaCup = buildTeaCup();
-    this.teaCup.position.set(1.5, 0.08, 0.6);
-    this.scene.add(this.teaCup);
-
-    // Highlighters
-    this.highlighters = buildHighlighters();
-    this.highlighters.position.set(0.4, 0.07, 1.2);
-    this.scene.add(this.highlighters);
-
-    // Pencil
-    this.pencil = buildPencil();
-    this.pencil.position.set(-0.5, 0.08, 1.3);
-    this.pencil.rotation.y = -0.6;
-    this.scene.add(this.pencil);
-
-    // Plant
-    this.plant = buildPlant();
-    this.plant.position.set(1.9, 0.08, -1.0);
-    this.scene.add(this.plant);
-
-    // Book stack
-    this.books = buildBookStack();
-    this.books.position.set(-1.9, 0.08, 0.4);
-    this.books.rotation.y = 0.2;
-    this.scene.add(this.books);
-
-    // New: paper stack
-    this.papers = buildPaperStack();
-    this.papers.position.set(1.0, 0.08, -0.5);
-    this.papers.rotation.y = -0.4;
-    this.scene.add(this.papers);
-
-    // New: eraser
-    this.eraser = buildEraser();
-    this.eraser.position.set(0.9, 0.08, 0.9);
-    this.eraser.rotation.y = 0.5;
-    this.scene.add(this.eraser);
-
-    // New: paperclip
-    this.paperclip = buildPaperclip();
-    this.paperclip.position.set(-0.9, 0.08, 0.8);
-    this.scene.add(this.paperclip);
-
-    // Lamp
-    this.lamp = buildLamp();
-    this.lamp.position.set(-1.6, 0.08, -0.3);
-    this.lamp.rotation.y = 0.4;
-    this.scene.add(this.lamp);
-
-    // Dust motes (atmosphere)
-    this.dust = buildDustMotes(this.dustCount);
-    this.dust.position.y = 0.4;
-    this.scene.add(this.dust);
-  }
-
-  _bindEvents() {
-    this._onResize = this._resize.bind(this);
-    this._onMouseMove = this._onMouseMove.bind(this);
-    this._onTouchMove = this._onTouchMove.bind(this);
-    this._onTouchEnd = this._onTouchEnd.bind(this);
-    window.addEventListener('resize', this._onResize, { passive: true });
-    window.addEventListener('mousemove', this._onMouseMove, { passive: true });
-    window.addEventListener('touchmove', this._onTouchMove, { passive: true });
-    window.addEventListener('touchend', this._onTouchEnd, { passive: true });
-  }
-
-  _onMouseMove(e) {
-    const nx = (e.clientX / window.innerWidth) * 2 - 1;
-    const ny = (e.clientY / window.innerHeight) * 2 - 1;
-    this.mouse.tx = nx;
-    this.mouse.ty = ny;
-  }
-
-  _onTouchMove(e) {
-    if (e.touches.length > 0) {
-      const t = e.touches[0];
-      this.touch.x = (t.clientX / window.innerWidth) * 2 - 1;
-      this.touch.y = (t.clientY / window.innerHeight) * 2 - 1;
-      this.touch.active = true;
-      this.mouse.tx = this.touch.x;
-      this.mouse.ty = this.touch.y;
-    }
-  }
-
-  _onTouchEnd() {
-    this.touch.active = false;
-    // ease the mouse back to neutral
-    this.mouse.tx = 0;
-    this.mouse.ty = 0;
-  }
-
-  _resize() {
-    const w = this.canvas.clientWidth;
-    const h = this.canvas.clientHeight;
-    if (!w || !h) return;
-    this.renderer.setSize(w, h, false);
-    this.camera.aspect = w / h;
-    // Camera distance tuning
-    if (w < 480) {
-      this.cameraBase.set(0, 2.5, 7.6);
-    } else if (w < 720) {
-      this.cameraBase.set(0, 2.4, 7.0);
-    } else if (w < 900) {
-      this.cameraBase.set(0, 2.3, 6.2);
-    } else {
-      this.cameraBase.set(0, 2.2, 5.6);
-    }
-    this.camera.updateProjectionMatrix();
-  }
-
-  setScrollProgress(p) {
-    this.scrollProgress = Math.max(0, Math.min(1, p));
-  }
-
-  setMode(mode) {
-    if (mode === 'dark') {
-      this.scene.fog.color.set('#1A1814');
-      this.ambient.color.set('#3A2E1E');
-      this.ambient.intensity = 0.18;
-      this.hemi.color.set('#3A2E1E');
-      this.hemi.groundColor.set('#0A0805');
-      this.lampPoint.color.set('#FFB060');
-      this.lampSpot.color.set('#FFB060');
-      this.rim.color.set('#FF9C5C');
-      this.renderer.toneMappingExposure = 0.85;
-    } else {
-      this.scene.fog.color.set(PALETTE.bg);
-      this.ambient.color.set(PALETTE.bg);
-      this.ambient.intensity = 0.25;
-      this.hemi.color.set(0xE8DDC4);
-      this.hemi.groundColor.set(0x2A1E10);
-      this.lampPoint.color.set(PALETTE.lamp);
-      this.lampSpot.color.set(PALETTE.lamp);
-      this.rim.color.set(0xFFD9A8);
-      this.renderer.toneMappingExposure = 1.05;
-    }
-  }
-
-  relightLamp() {
-    this.litAt = performance.now();
-  }
-
-  _animate(t) {
-    const ts = t / 1000;
-    const dt = Math.min(0.05, ts - (this._lastT || ts));
-    this._lastT = ts;
-
-    // Mouse parallax smoothing
-    this.mouse.x += (this.mouse.tx - this.mouse.x) * 0.08;
-    this.mouse.y += (this.mouse.ty - this.mouse.y) * 0.08;
-
-    // Idle orbit
-    this.idleAngle += dt * 0.04;
-
-    // Camera
-    const orbitX = Math.sin(this.idleAngle) * 0.4;
-    const orbitY = Math.cos(this.idleAngle * 0.7) * 0.05;
-    const parallaxX = this.mouse.x * 0.5;
-    const parallaxY = -this.mouse.y * 0.3;
-
-    this.camera.position.x = this.cameraBase.x + orbitX + parallaxX;
-    this.camera.position.y = this.cameraBase.y + orbitY + parallaxY;
-    this.camera.position.z = this.cameraBase.z;
-
-    // Zoom out + tilt as we scroll
-    const zoomOut = 1 + this.scrollProgress * 0.6;
-    this.camera.position.z = this.cameraBase.z * zoomOut;
-    const tiltX = this.scrollProgress * 0.18;
-    const liftY = this.scrollProgress * 0.4;
-    this.camera.rotation.x = -tiltX;
-    this.camera.position.y += liftY;
-    this.camera.lookAt(0, 0.6 + this.scrollProgress * 0.3, 0);
-
-    // Lamp intensity (relight pulse + gentle flicker)
-    const sinceLit = (performance.now() - this.litAt) / 1000;
-    this.flickerPhase += dt * 6.0;
-    const flicker = 0.98 + Math.sin(this.flickerPhase * 1.3) * 0.015
-                          + (Math.random() - 0.5) * 0.012;
-    if (this.litAt > 0 && sinceLit < 2.5) {
-      const k = sinceLit / 2.5;
-      this.targetLampIntensity = 1.0 + Math.sin(k * Math.PI) * 1.4;
-    } else {
-      this.targetLampIntensity = 1.0;
-    }
-    this.lampIntensity += (this.targetLampIntensity - this.lampIntensity) * 0.1;
-
-    this.lampPoint.intensity = 3.5 * this.lampIntensity * flicker;
-    this.lampSpot.intensity  = 4.0 * this.lampIntensity * flicker;
-
-    // Bulb + glow scale with intensity
-    const bulb = this.lamp.getObjectByName('Bulb');
-    if (bulb) {
-      const s = 0.6 + this.lampIntensity * 0.6;
-      bulb.scale.setScalar(s);
-      bulb.material.opacity = Math.min(1, 0.5 + this.lampIntensity * 0.5);
-    }
-    const glow = this.lamp.getObjectByName('Glow');
-    if (glow) {
-      const gs = (0.8 + this.lampIntensity * 0.6) * (0.95 + Math.sin(this.flickerPhase * 1.7) * 0.05);
-      glow.scale.set(gs * 1.4, gs * 1.4, 1);
-      glow.material.opacity = Math.min(1, 0.55 + this.lampIntensity * 0.45);
-    }
-    const cone = this.lamp.getObjectByName('LightCone');
-    if (cone) {
-      cone.material.opacity = 0.25 + this.lampIntensity * 0.15;
+    /* ── CSS Variables ─────────────────────────────────── */
+    :root {
+      --bg: #0A0A0A;
+      --text-primary: #F0EDE8;
+      --text-secondary: #8A8682;
+      --text-tertiary: #5C5A56;
+      --accent-amber: #D4A373;
+      --accent-rose: #C97B84;
+      --border: #1F1E1C;
+      --hover-bg: rgba(255, 255, 255, 0.03);
     }
 
-    // PDF texture
-    this.pdfTexture.update(dt);
-
-    // Tea steam — multi-wisp looping
-    if (this.teaCup) {
-      const steam = this.teaCup.getObjectByName('Steam');
-      if (steam) {
-        steam.children.forEach((wisp) => {
-          // Each wisp has a life 0..1 that loops
-          wisp.userData.life += dt * wisp.userData.speed;
-          if (wisp.userData.life > 1) wisp.userData.life = 0;
-
-          const life = wisp.userData.life;
-          const y = wisp.userData.baseY + life * 0.55;
-          const wob = Math.sin(life * Math.PI * 2 + wisp.userData.phase) * 0.05;
-          wisp.position.y = y;
-          wisp.position.x = wob * wisp.userData.driftX * 4;
-          wisp.position.z = wob * wisp.userData.driftZ * 4;
-
-          // Fade in → out across the cycle
-          const fade = Math.sin(life * Math.PI); // 0 → 1 → 0
-          wisp.material.opacity = 0.35 * fade * wisp.userData.scale;
-          const sc = wisp.userData.scale * (0.7 + life * 0.8);
-          wisp.scale.setScalar(sc);
-        });
-      }
+    /* ── Grain Texture ─────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;
+      opacity: 0.03;
+      background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPAAAADwCAMAAAAJixmgAAAAMFBMVEUAAAD///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAnB1lBAAAAD3RSTlMAM2Z3mZq7zN3u//+Z25UCAAABa0lEQVR4nO3Yy27DIBRAUQKJ8zD//7dVGqXqQrQiVnfGNJ2z7I0kxB0M2F0BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD4R+qfq1QqZ1+lnDPPEQAAoG9bzxUKJZEpAADA6aHnCgXfeZ3cAQAAjtt6roD+BAAA4Eet5wqE1x3mDgAAcNLWcwWMKwAAiLr2XCE33nNxAABA2NZzBbTtAQAAftTWcwVoOwAAwI9iPVfoY507AAAAG9RzBT7Y6gAAAO/o3oV2HxUAAICN3e9C+/2kAAAA/Nn9LpR+rggAAEBm965kny0EAADgtTvm/JwuHwAAgIFdc77PFw4AAECnXT/U5wsIAACgx64/NQAAAJ10/7F5AQAAOmDfj8sLAABw9b7/mBcAAFj3/4d5AQCAZd+H8wIAAEu+D/MCAABLvg/zAgAAS74P8wIAAD/2fZgXAAD4se/DvAAAwI99H+YFAIAf+z7MCwAAP/Z9mBcAAHjS9g8zLy4GAOZI3wAAAABJRU5ErkJggg==");
+      background-repeat: repeat;
+      background-size: 240px;
     }
 
-    // Plant sway (subtle)
-    if (this.plant && this.plant.userData.leavesGroup) {
-      const lg = this.plant.userData.leavesGroup;
-      const sw = Math.sin(ts * 0.7) * 0.03 + Math.sin(ts * 1.3) * 0.01;
-      lg.rotation.z = sw;
-      lg.rotation.x = Math.cos(ts * 0.5) * 0.015;
+    /* ── Cursor Warmth (set via JS) ────────────────────── */
+    #cursor-warmth {
+      position: fixed;
+      inset: 0;
+      z-index: 9998;
+      pointer-events: none;
+      transition: background 0.08s ease-out;
     }
 
-    // Notebook page turn (occasional, subtle)
-    if (this.notebook && this.notebook.userData.pageGroup) {
-      const pg = this.notebook.userData.pageGroup;
-      // Slow loop: page rotates 0..25deg over 8s, then resets
-      const cycle = (ts % 8) / 8;
-      const ang = Math.sin(cycle * Math.PI * 2) * 0.35;
-      pg.rotation.z = ang;
-    }
-
-    // Dust motes drift
-    if (this.dust) {
-      const pts = this.dust.userData.points;
-      const pos = pts.geometry.getAttribute('position');
-      const base = pts.geometry.getAttribute('aBase');
-      const seed = pts.geometry.getAttribute('aSeed');
-      for (let i = 0; i < pos.count; i++) {
-        const phase = seed.getX(i);
-        const speed = seed.getY(i);
-        const amp   = seed.getZ(i);
-        const life = (ts * speed * 0.4 + phase) % (Math.PI * 2);
-        const ox = Math.sin(life) * amp * 1.2;
-        const oy = Math.cos(life * 0.7) * amp * 0.4;
-        const oz = Math.sin(life * 0.5 + phase) * amp;
-        pos.setX(i, base.getX(i) + ox);
-        pos.setY(i, base.getY(i) + oy);
-        pos.setZ(i, base.getZ(i) + oz);
-      }
-      pos.needsUpdate = true;
-    }
-
-    // Subtle desk object idle motion
-    if (this.notebook) this.notebook.rotation.y = 0.3 + Math.sin(ts * 0.4) * 0.01;
-    if (this.teaCup)   this.teaCup.position.y    = 0.08 + Math.sin(ts * 0.5) * 0.002;
-
-    // Render
-    this.renderer.render(this.scene, this.camera);
-
-    this._raf = requestAnimationFrame((tt) => this._animate(tt));
-  }
-
-  destroy() {
-    cancelAnimationFrame(this._raf);
-    window.removeEventListener('resize', this._onResize);
-    window.removeEventListener('mousemove', this._onMouseMove);
-    window.removeEventListener('touchmove', this._onTouchMove);
-    window.removeEventListener('touchend', this._onTouchEnd);
-    this.renderer.dispose();
-    this.scene.traverse((o) => {
-      if (o.geometry) o.geometry.dispose();
-      if (o.material) {
-        if (Array.isArray(o.material)) o.material.forEach((m) => m.dispose());
-        else o.material.dispose();
-      }
-    });
-  }
-}
-
-
-gsap.registerPlugin(ScrollTrigger);
-
-const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-
-/* ---------------- Helpers ---------------- */
-const $  = (s, r = document) => r.querySelector(s);
-const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
-
-/* ---------------- Loader hide ---------------- */
-const loader = $('#loader');
-const hideLoader = () => {
-  if (!loader) return;
-  loader.classList.add('is-hidden');
-  setTimeout(() => loader.remove(), 700);
-};
-
-/* =====================================================================
-   Desk scene (Three.js)
-   ===================================================================== */
-let scene = null;
-const canvas = $('#scene');
-if (canvas) {
-  try {
-    scene = new DeskScene(canvas);
-    window.__deskScene = scene; // for debugging
-  } catch (err) {
-    console.error('DeskScene init failed:', err);
-  }
-}
-
-/* =====================================================================
-   Lenis smooth scroll
-   ===================================================================== */
-let lenis = null;
-if (!reducedMotion) {
-  lenis = new Lenis({
-    duration: 1.2,
-    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-    smoothWheel: true,
-    smoothTouch: false,
-    touchMultiplier: 2,
-  });
-
-  lenis.on('scroll', ScrollTrigger.update);
-
-  gsap.ticker.add((time) => {
-    lenis.raf(time * 1000);
-  });
-  gsap.ticker.lagSmoothing(0);
-} else {
-  ScrollTrigger.refresh();
-}
-
-/* =====================================================================
-   Page-turn ScrollTrigger — reveal each section's contents
-   ===================================================================== */
-const sections = $$('.page');
-const pageCurrent = $('#page-current');
-let currentPageIndex = 0;
-
-function setPageIndicator(idx) {
-  if (!pageCurrent) return;
-  const num = String(idx + 1).padStart(2, '0');
-  if (pageCurrent.textContent !== num) pageCurrent.textContent = num;
-}
-
-sections.forEach((section, i) => {
-  const revealTargets = section.querySelectorAll(
-    '.eyebrow, .section-title, .lede, .body-text, .feature-list, ' +
-    '.ink-palette, .mark-doc, .flipbook, .discard-stage, .e2e-grid, ' +
-    '.wax-seal, .download-card, .desk-overlay, .margin-note, ' +
-    '.ember, .ember-hint, .footer, .e2e-step'
-  );
-
-  if (revealTargets.length) {
-    gsap.set(revealTargets, { opacity: 0, y: 30 });
-    if (i === 0) {
-      const revealFirstPage = () => {
-        gsap.to(revealTargets, {
-          opacity: 1, y: 0,
-          duration: 0.9,
-          ease: 'power3.out',
-          stagger: 0.06,
-          overwrite: 'auto',
-        });
-      };
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => setTimeout(revealFirstPage, 100));
-      } else {
-        setTimeout(revealFirstPage, 100);
-      }
-    }
-  }
-
-  ScrollTrigger.create({
-    trigger: section,
-    start: 'top 80%',
-    end: 'bottom 20%',
-    onEnter: () => {
-      currentPageIndex = i;
-      setPageIndicator(i);
-      gsap.to(revealTargets, {
-        opacity: 1, y: 0,
-        duration: 0.9,
-        ease: 'power3.out',
-        stagger: 0.05,
-        overwrite: 'auto',
-      });
-    },
-    onEnterBack: () => {
-      currentPageIndex = i;
-      setPageIndicator(i);
-      gsap.to(revealTargets, {
-        opacity: 1, y: 0,
-        duration: 0.6,
-        ease: 'power3.out',
-        stagger: 0.03,
-        overwrite: 'auto',
-      });
-    },
-  });
-});
-
-/* =====================================================================
-   Section-specific animations
-   ===================================================================== */
-
-/* Page 1 — Desk */
-const deskSection = $('.page--desk');
-if (deskSection) {
-  const titleLines = deskSection.querySelectorAll('.title__line');
-  if (titleLines.length && !reducedMotion) {
-    gsap.fromTo(
-      titleLines,
-      { yPercent: 110, opacity: 0 },
-      {
-        yPercent: 0, opacity: 1,
-        duration: 1.1, stagger: 0.12,
-        ease: 'power3.out', delay: 0.3,
-      }
-    );
-  }
-
-  const marginNotes = deskSection.querySelectorAll('.margin-note');
-  if (marginNotes.length && !reducedMotion) {
-    gsap.fromTo(
-      marginNotes,
-      { opacity: 0, y: 10 },
-      {
-        opacity: 1, y: 0,
-        duration: 0.8,
-        ease: 'power2.out',
-        delay: 1.4,
-        stagger: 0.2,
-      }
-    );
-  }
-
-  // Hide hint when user starts scrolling
-  const scrollHint = deskSection.querySelector('.scroll-hint');
-  if (scrollHint) {
-    ScrollTrigger.create({
-      trigger: deskSection,
-      start: 'top top',
-      end: '+=200',
-      onUpdate: (self) => {
-        gsap.to(scrollHint, { opacity: 1 - self.progress * 1.6, duration: 0.2 });
-      },
-    });
-  }
-
-  // Feed scroll progress to the scene
-  ScrollTrigger.create({
-    trigger: deskSection,
-    start: 'top top',
-    end: 'bottom top',
-    scrub: true,
-    onUpdate: (self) => {
-      if (scene) scene.setScrollProgress(self.progress);
-    },
-  });
-}
-
-/* Page 2 — Open: flipbook + lines */
-const flipbook = $('#flipbook');
-if (flipbook && !reducedMotion) {
-  ScrollTrigger.create({
-    trigger: flipbook,
-    start: 'top 70%',
-    onEnter: () => flipbook.classList.add('is-flipped'),
-    onLeaveBack: () => flipbook.classList.remove('is-flipped'),
-  });
-
-  const frontLines = $$('.flipbook__page--front .flipbook__lines span', flipbook);
-  gsap.fromTo(
-    frontLines,
-    { scaleX: 0, transformOrigin: 'left center' },
-    {
-      scaleX: 1,
-      duration: 0.6, stagger: 0.05,
-      ease: 'power2.out',
-      scrollTrigger: {
-        trigger: flipbook,
-        start: 'top 80%',
-        toggleActions: 'play none none reverse',
-      },
-    }
-  );
-
-  // Feature-list dots pop in
-  const dots = $$('.feature-list .dot');
-  dots.forEach((d, i) => {
-    ScrollTrigger.create({
-      trigger: d,
-      start: 'top 85%',
-      onEnter: () => gsap.fromTo(d, { scale: 0 }, { scale: 1, duration: 0.5, ease: 'back.out(4)' }),
-    });
-  });
-}
-
-/* Page 3 — Mark: ink-draw path + interactive freehand mode */
-const inkPath = document.querySelector('.ink-path');
-if (inkPath && !reducedMotion) {
-  gsap.to(inkPath, {
-    strokeDashoffset: 0,
-    duration: 2.4,
-    ease: 'power2.inOut',
-    scrollTrigger: {
-      trigger: inkPath,
-      start: 'top 80%',
-      toggleActions: 'play none none reverse',
-    },
-  });
-}
-
-// Freehand ink mode: click the brush icon to draw your own path
-const freehandBtn = $('#freehand-toggle');
-const freehandCanvas = $('#freehand-canvas');
-if (freehandBtn && freehandCanvas) {
-  const fhCtx = freehandCanvas.getContext('2d');
-  // Size canvas to its container
-  const sizeCanvas = () => {
-    const r = freehandCanvas.getBoundingClientRect();
-    freehandCanvas.width  = r.width  * (window.devicePixelRatio || 1);
-    freehandCanvas.height = r.height * (window.devicePixelRatio || 1);
-    fhCtx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
-    fhCtx.lineCap = 'round';
-    fhCtx.lineJoin = 'round';
-    fhCtx.lineWidth = 3;
-    fhCtx.strokeStyle = '#B85C38';
-  };
-  sizeCanvas();
-  window.addEventListener('resize', sizeCanvas);
-
-  let drawing = false;
-  let lastPt = null;
-
-  const getPos = (e) => {
-    const r = freehandCanvas.getBoundingClientRect();
-    const t = e.touches ? e.touches[0] : e;
-    return { x: t.clientX - r.left, y: t.clientY - r.top };
-  };
-  const start = (e) => {
-    e.preventDefault();
-    drawing = true;
-    lastPt = getPos(e);
-    fhCtx.beginPath();
-    fhCtx.moveTo(lastPt.x, lastPt.y);
-  };
-  const move = (e) => {
-    if (!drawing) return;
-    e.preventDefault();
-    const p = getPos(e);
-    fhCtx.lineTo(p.x, p.y);
-    fhCtx.stroke();
-    lastPt = p;
-  };
-  const end = () => { drawing = false; };
-
-  freehandBtn.addEventListener('click', () => {
-    const isActive = freehandCanvas.classList.toggle('is-active');
-    freehandBtn.classList.toggle('is-on', isActive);
-    if (isActive) {
-      fhCtx.clearRect(0, 0, freehandCanvas.width, freehandCanvas.height);
-    }
-    vibrate(8);
-  });
-
-  freehandCanvas.addEventListener('mousedown', start);
-  freehandCanvas.addEventListener('mousemove', move);
-  window.addEventListener('mouseup', end);
-  freehandCanvas.addEventListener('touchstart', start, { passive: false });
-  freehandCanvas.addEventListener('touchmove', move, { passive: false });
-  window.addEventListener('touchend', end);
-}
-
-const inkPalette = $('#ink-palette');
-const markDoc = $('#mark-doc');
-let currentInk = localStorage.getItem('freya:ink') || '#C4A962';
-
-function applyInkToHighlights(color) {
-  if (!markDoc) return;
-  markDoc.style.setProperty('--hl', color);
-  $$('.hl', markDoc).forEach((el) => el.style.setProperty('--hl', color));
-}
-
-if (inkPalette) {
-  const inks = $$('.ink', inkPalette);
-  inks.forEach((btn) => {
-    const c = btn.dataset.ink;
-    btn.setAttribute('aria-pressed', String(c === currentInk));
-  });
-  applyInkToHighlights(currentInk);
-
-  inks.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      currentInk = btn.dataset.ink;
-      localStorage.setItem('freya:ink', currentInk);
-      inks.forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
-      applyInkToHighlights(currentInk);
-      gsap.fromTo(btn, { scale: 1.2 }, { scale: 1, duration: 0.4, ease: 'back.out(3)' });
-      vibrate(6);
-    });
-  });
-}
-
-/* Page 4 — Discard: multi-stage effect */
-const eraseBtn = $('#erase-btn');
-const scribble = $('#discard-scribble');
-const discardStage = $('#discard-stage');
-const discardText = $('.discard-text', discardStage);
-
-function burstDust(originX, originY, count = 55, opts = {}) {
-  if (!discardStage) return;
-  const rect = discardStage.getBoundingClientRect();
-  const cx = originX - rect.left;
-  const cy = originY - rect.top;
-  const colors = opts.colors || ['var(--ink-3)', 'var(--rust)', 'var(--accent-2)', 'var(--primary)'];
-  for (let i = 0; i < count; i++) {
-    const dust = document.createElement('span');
-    dust.className = 'dust';
-    dust.style.left = `${cx}px`;
-    dust.style.top  = `${cy}px`;
-    const size = 3 + Math.random() * 9;
-    dust.style.width  = `${size}px`;
-    dust.style.height = `${size}px`;
-    dust.style.background = colors[Math.floor(Math.random() * colors.length)];
-    // Some dust is rectangular (paper flecks)
-    if (Math.random() > 0.7) {
-      dust.style.borderRadius = '1px';
-      dust.style.width  = `${size * 0.4}px`;
-      dust.style.height = `${size * 0.15}px`;
-    }
-    discardStage.appendChild(dust);
-
-    const angle = Math.random() * Math.PI * 2;
-    const dist = 100 + Math.random() * 300;
-    const dx = Math.cos(angle) * dist;
-    const dy = Math.sin(angle) * dist - 60; // bias upward
-    const rot = (Math.random() - 0.5) * 1200;
-    const dur = 0.9 + Math.random() * 1.0;
-    gsap.to(dust, {
-      x: dx, y: dy, rotation: rot,
-      opacity: 0,
-      duration: dur,
-      ease: 'power2.out',
-      onComplete: () => dust.remove(),
-    });
-  }
-}
-
-if (eraseBtn) {
-  eraseBtn.addEventListener('click', (e) => {
-    vibrate(15);
-
-    // Stage 1: shake the stage
-    gsap.fromTo(
-      discardStage,
-      { x: 0, y: 0 },
-      { x: 4, y: -2, duration: 0.05, yoyo: true, repeat: 5, ease: 'power2.inOut' }
-    );
-
-    // Stage 2: scribble cracks then crumbles
-    if (scribble) {
-      gsap.timeline()
-        .to(scribble, { rotation: 6, scale: 1.05, duration: 0.15, ease: 'power2.out' })
-        .to(scribble, { rotation: -10, scale: 0.95, duration: 0.12, ease: 'power2.in' })
-        .to(scribble, { opacity: 0, scale: 0.4, rotation: 20, y: -20, duration: 0.5, ease: 'back.in(2)' }, '+=0.05')
-        .add(() => scribble.classList.add('is-erased'));
-    }
-
-    // Stage 3: dust burst from the scribble position (above the button is more natural)
-    const r = eraseBtn.getBoundingClientRect();
-    burstDust(
-      r.left + r.width * (0.2 + Math.random() * 0.6),
-      r.top - 60,
-      80,
-      { colors: ['var(--ink-3)', 'var(--rust)', 'var(--accent-2)', 'var(--primary)'] }
-    );
-
-    // Stage 4: subtle paper rustle (the discard text)
-    if (discardText) {
-      gsap.fromTo(
-        discardText,
-        { x: -2 },
-        { x: 0, duration: 0.4, ease: 'elastic.out(1, 0.4)' }
+    /* ── Grain overlay for sections (on top of cursor warmth) ── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 9997;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(255, 255, 255, 0.003) 2px,
+        rgba(255, 255, 255, 0.003) 4px
       );
     }
 
-    // Stage 5: change button text
-    eraseBtn.querySelector('span:last-child').textContent = 'Erased';
-    eraseBtn.disabled = true;
-    gsap.to(eraseBtn, { opacity: 0.6, duration: 0.3 });
-  });
-}
-
-/* Page 5 — Wax seal stamp */
-const waxSeal = $('#wax-seal');
-if (waxSeal) {
-  waxSeal.addEventListener('click', () => {
-    vibrate(20);
-    waxSeal.classList.remove('is-stamped');
-    void waxSeal.offsetWidth; // restart animation
-    waxSeal.classList.add('is-stamped');
-    const r = waxSeal.getBoundingClientRect();
-    burstDust(
-      r.left + r.width / 2,
-      r.top + r.height / 2,
-      32,
-      { colors: ['var(--rust)', 'var(--rust)', 'var(--accent-2)', 'var(--ink-3)'] }
-    );
-    // Secondary stamp pop effect
-    gsap.fromTo(waxSeal,
-      { scale: 1.2, opacity: 0.5 },
-      { scale: 1, opacity: 1, duration: 0.5, ease: 'back.out(2)', delay: 0.6 }
-    );
-  });
-}
-
-/* Page 7 — Ember relight */
-const ember = $('#ember');
-if (ember) {
-  ember.addEventListener('click', () => {
-    vibrate(25);
-    ember.classList.add('is-lit');
-    if (scene) scene.relightLamp();
-    const r = ember.getBoundingClientRect();
-    burstDust(
-      r.left + r.width / 2,
-      r.top + r.height / 2,
-      40,
-      { colors: ['var(--accent)', 'var(--rust)', 'var(--accent-2)'] }
-    );
-  });
-}
-
-/* =====================================================================
-   Page 1: hero text parallax
-   ===================================================================== */
-const heroOverlay = $('.desk-overlay');
-if (heroOverlay && !reducedMotion) {
-  window.addEventListener('mousemove', (e) => {
-    const nx = (e.clientX / window.innerWidth - 0.5);
-    const ny = (e.clientY / window.innerHeight - 0.5);
-    gsap.to(heroOverlay, {
-      x: nx * 8,
-      y: ny * 4,
-      duration: 1.2,
-      ease: 'power3.out',
-    });
-  }, { passive: true });
-}
-
-/* =====================================================================
-   Ghost cursor trail
-   ===================================================================== */
-const trailContainer = $('#cursor-trail');
-const TRAIL_MAX = 12;
-const trail = [];
-if (trailContainer && !isTouch) {
-  for (let i = 0; i < TRAIL_MAX; i++) {
-    const dot = document.createElement('span');
-    dot.className = 'cursor-trail__dot';
-    dot.style.opacity = '0';
-    trailContainer.appendChild(dot);
-    trail.push({ el: dot, x: 0, y: 0 });
-  }
-
-  let lastSpawn = 0;
-  window.addEventListener('mousemove', (e) => {
-    const now = performance.now();
-    if (now - lastSpawn < 32) return;
-    lastSpawn = now;
-    for (let i = trail.length - 1; i > 0; i--) {
-      trail[i].x = trail[i - 1].x;
-      trail[i].y = trail[i - 1].y;
+    /* ── Top Bar ──────────────────────────────────────── */
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 24px 48px;
+      font-size: 11px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 400;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      opacity: 0;
+      transform: translateY(-10px);
     }
-    trail[0].x = e.clientX;
-    trail[0].y = e.clientY;
-    trail.forEach((t, i) => {
-      const k = i / trail.length;
-      t.el.style.left = `${t.x}px`;
-      t.el.style.top  = `${t.y}px`;
-      t.el.style.opacity = String(0.6 * (1 - k));
-      t.el.style.transform = `translate(-50%, -50%) scale(${1 - k * 0.7})`;
-    });
-  }, { passive: true });
-}
 
-/* =====================================================================
-   Double-click highlight (localStorage persisted)
-   ===================================================================== */
-const HL_KEY = 'freya:highlights';
-const loadHighlights = () => { try { return JSON.parse(localStorage.getItem(HL_KEY) || '{}'); } catch { return {}; } };
-const saveHighlights = (m)  => { try { localStorage.setItem(HL_KEY, JSON.stringify(m)); } catch {} };
-const applyHighlights = () => {
-  const map = loadHighlights();
-  $$('[data-hl]').forEach((el) => {
-    if (map[el.dataset.hl]) el.classList.add('hl-user');
-  });
-};
-applyHighlights();
-$$('[data-hl]').forEach((el) => {
-  el.addEventListener('dblclick', () => {
-    const map = loadHighlights();
-    const key = el.dataset.hl;
-    if (map[key]) {
-      delete map[key];
-      el.classList.remove('hl-user');
-    } else {
-      map[key] = { color: currentInk, t: Date.now() };
-      el.classList.add('hl-user');
+    .top-bar .left {
+      color: var(--text-primary);
     }
-    saveHighlights(map);
-    vibrate(4);
-  });
-});
 
-/* =====================================================================
-   Mode toggle (paper / dark)
-   ===================================================================== */
-const modeBtn = $('#mode-toggle');
-const modeIcon = modeBtn?.querySelector('.mode-icon');
-function setMode(mode) {
-  document.documentElement.setAttribute('data-mode', mode);
-  localStorage.setItem('freya:mode', mode);
-  if (modeIcon) modeIcon.textContent = mode === 'dark' ? '☀' : '☾';
-  if (scene) scene.setMode(mode);
-}
-const savedMode = localStorage.getItem('freya:mode') || 'paper';
-setMode(savedMode);
-if (modeBtn) {
-  modeBtn.addEventListener('click', () => {
-    const cur = document.documentElement.getAttribute('data-mode');
-    setMode(cur === 'dark' ? 'paper' : 'dark');
-    vibrate(6);
-  });
-}
-
-/* =====================================================================
-   Zoom controls
-   ===================================================================== */
-const ZOOM_STEPS = [50, 75, 100, 125, 150, 175, 200];
-let zoomIdx = 2;
-const zoomLabel = $('#zoom-level');
-function applyZoom() {
-  const level = ZOOM_STEPS[zoomIdx];
-  document.body.classList.remove('zoom-50','zoom-75','zoom-100','zoom-125','zoom-150','zoom-175','zoom-200');
-  document.body.classList.add(`zoom-${level}`);
-  if (zoomLabel) zoomLabel.textContent = `${level}%`;
-}
-applyZoom();
-$('#zoom-in')?.addEventListener('click', () => {
-  if (zoomIdx < ZOOM_STEPS.length - 1) { zoomIdx++; applyZoom(); vibrate(4); }
-});
-$('#zoom-out')?.addEventListener('click', () => {
-  if (zoomIdx > 0) { zoomIdx--; applyZoom(); vibrate(4); }
-});
-
-/* =====================================================================
-   Touch swipe navigation (mobile)
-   ===================================================================== */
-let touchStartY = null;
-if (isTouch) {
-  window.addEventListener('touchstart', (e) => {
-    if (e.touches.length === 1) touchStartY = e.touches[0].clientY;
-  }, { passive: true });
-  window.addEventListener('touchend', (e) => {
-    if (touchStartY === null) return;
-    const t = e.changedTouches[0];
-    const dy = touchStartY - t.clientY;
-    touchStartY = null;
-    if (Math.abs(dy) < 60) return;
-    const dir = dy > 0 ? 1 : -1;
-    const next = Math.max(0, Math.min(sections.length - 1, currentPageIndex + dir));
-    if (next === currentPageIndex) return;
-    const target = sections[next];
-    if (target) {
-      const top = target.getBoundingClientRect().top + window.scrollY;
-      if (lenis) lenis.scrollTo(top, { duration: 1.2 });
-      else window.scrollTo({ top, behavior: 'smooth' });
-      vibrate(10);
+    .top-bar .right {
+      color: var(--text-secondary);
     }
-  }, { passive: true });
-}
 
-/* =====================================================================
-   Search palette
-   ===================================================================== */
-const palette = $('#search-palette');
-const paletteInput = $('#palette-input');
-const paletteResults = $('#palette-results');
-const PALETTE_ITEMS = [
-  { title: 'The Desk', page: '01', section: '.page--desk' },
-  { title: 'Open', page: '02', section: '.page--open' },
-  { title: 'Mark', page: '03', section: '.page--mark' },
-  { title: 'Discard', page: '04', section: '.page--discard' },
-  { title: 'Share', page: '05', section: '.page--share' },
-  { title: 'Download', page: '06', section: '.page--download' },
-  { title: 'Ember', page: '07', section: '.page--ember' },
-  { title: 'Highlight (Mark section)', page: '03', section: '.page--mark' },
-  { title: 'Erase (Discard section)', page: '04', section: '.page--discard' },
-  { title: 'Wax seal (Share section)', page: '05', section: '.page--share' },
-  { title: 'Relight lamp (Ember)', page: '07', section: '.page--ember', action: 'relight' },
-  { title: 'Keyboard shortcuts', action: 'shortcuts' },
-  { title: 'Toggle dark mode', action: 'dark' },
-];
-
-let paletteOpen = false;
-let paletteIndex = 0;
-let paletteFiltered = [];
-
-function openPalette() {
-  if (!palette) return;
-  palette.hidden = false;
-  paletteOpen = true;
-  paletteInput.value = '';
-  paletteIndex = 0;
-  renderPalette('');
-  setTimeout(() => paletteInput.focus(), 50);
-}
-function closePalette() {
-  if (!palette) return;
-  palette.hidden = true;
-  paletteOpen = false;
-}
-function renderPalette(query) {
-  const q = query.trim().toLowerCase();
-  paletteFiltered = PALETTE_ITEMS.filter((it) =>
-    !q || it.title.toLowerCase().includes(q) || it.page?.includes(q)
-  );
-  paletteResults.innerHTML = '';
-  if (!paletteFiltered.length) {
-    const li = document.createElement('li');
-    li.className = 'is-empty';
-    li.textContent = 'no matches — try "highlight" or "share"';
-    paletteResults.appendChild(li);
-    return;
-  }
-  paletteFiltered.forEach((it, i) => {
-    const li = document.createElement('li');
-    li.setAttribute('role', 'option');
-    li.dataset.idx = String(i);
-    if (i === paletteIndex) li.setAttribute('aria-selected', 'true');
-    const title = document.createElement('span');
-    title.innerHTML = highlightMatch(it.title, q);
-    li.appendChild(title);
-    if (it.page) {
-      const badge = document.createElement('span');
-      badge.className = 'badge';
-      badge.textContent = `page ${it.page}`;
-      li.appendChild(badge);
+    /* ── Hero ──────────────────────────────────────────── */
+    .hero {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
     }
-    li.addEventListener('click', () => activatePaletteItem(it));
-    paletteResults.appendChild(li);
-  });
-}
-function highlightMatch(text, q) {
-  if (!q) return text;
-  const idx = text.toLowerCase().indexOf(q);
-  if (idx < 0) return text;
-  return `${escapeHTML(text.slice(0, idx))}<mark>${escapeHTML(text.slice(idx, idx + q.length))}</mark>${escapeHTML(text.slice(idx + q.length))}`;
-}
-function escapeHTML(s) {
-  return s.replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-function activatePaletteItem(item) {
-  closePalette();
-  if (item.action === 'shortcuts') {
-    $('#shortcuts')?.showModal();
-    return;
-  }
-  if (item.action === 'relight') {
-    setTimeout(() => $('#ember')?.click(), 600);
-  }
-  if (item.action === 'dark') {
-    const cur = document.documentElement.getAttribute('data-mode');
-    setMode(cur === 'dark' ? 'paper' : 'dark');
-  }
-  if (item.section) {
-    const el = $(item.section);
-    if (el) {
-      const top = el.getBoundingClientRect().top + window.scrollY;
-      if (lenis) lenis.scrollTo(top, { duration: 1.4 });
-      else window.scrollTo({ top, behavior: 'smooth' });
+
+    .hero__title {
+      font-family: 'Playfair Display', serif;
+      font-weight: 300;
+      font-size: clamp(5rem, 15vw, 14rem);
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+      line-height: 1;
+      margin-bottom: 48px;
+      opacity: 0;
+      transform: translateY(30px);
     }
-  }
-}
 
-/* =====================================================================
-   Easter eggs
-   ===================================================================== */
-
-/* Konami code → crayon mode */
-const KONAMI = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
-let konamiIdx = 0;
-function checkKonami(e) {
-  if (e.key === KONAMI[konamiIdx]) {
-    konamiIdx++;
-    if (konamiIdx === KONAMI.length) {
-      konamiIdx = 0;
-      triggerCrayonMode();
+    .hero__glyph {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      opacity: 0;
+      transform: translateY(30px);
     }
-  } else {
-    konamiIdx = 0;
-  }
-}
-const crayonBanner = $('#crayon-banner');
-function triggerCrayonMode() {
-  document.body.classList.add('crayon-mode');
-  if (crayonBanner) {
-    crayonBanner.hidden = false;
-    setTimeout(() => { crayonBanner.hidden = true; }, 2200);
-  }
-  for (let i = 0; i < 42; i++) {
-    const c = document.createElement('span');
-    c.className = 'dust';
-    c.style.left = `${Math.random() * window.innerWidth}px`;
-    c.style.top = `-10px`;
-    c.style.background = ['#C4A962','#B85C38','#2A5B5C','#7D8B6F','#E8B4BC'][i % 5];
-    c.style.position = 'fixed';
-    c.style.zIndex = '300';
-    document.body.appendChild(c);
-    gsap.to(c, {
-      y: window.innerHeight + 40,
-      x: (Math.random() - 0.5) * 200,
-      rotation: (Math.random() - 0.5) * 720,
-      duration: 1.6 + Math.random() * 1.2,
-      ease: 'power2.in',
-      onComplete: () => c.remove(),
-    });
-  }
-}
 
-/* Type "freya" → runic flash */
-let freyaBuf = '';
-const runicFlash = $('#runic-flash');
-function checkFreya(e) {
-  if (e.key.length === 1 && /^[a-zA-Z]$/.test(e.key)) {
-    freyaBuf = (freyaBuf + e.key.toLowerCase()).slice(-5);
-    if (freyaBuf === 'freya') {
-      freyaBuf = '';
-      triggerRunicFlash();
+    .hero__glyph-line {
+      width: 60px;
+      height: 1px;
+      background-color: var(--text-primary);
+      flex-shrink: 0;
     }
-  } else if (e.key === 'Escape') {
-    freyaBuf = '';
-  }
-}
-function triggerRunicFlash() {
-  if (!runicFlash) return;
-  runicFlash.innerHTML = '<span class="runic-flash__glyph">ᚠᚱᛖᛋᚨ</span>';
-  runicFlash.classList.add('is-active');
-  setTimeout(() => runicFlash.classList.remove('is-active'), 1200);
-  setTimeout(() => { runicFlash.innerHTML = ''; }, 1600);
-}
 
-/* Ctrl+Shift+R → Ragnarök shake */
-function checkRagnarok(e) {
-  if (e.ctrlKey && e.shiftKey && (e.key === 'R' || e.key === 'r')) {
-    e.preventDefault();
-    document.body.classList.remove('ragnarok');
-    void document.body.offsetWidth;
-    document.body.classList.add('ragnarok');
-    setTimeout(() => document.body.classList.remove('ragnarok'), 900);
-  }
-}
-
-/* Easter egg: click the "Freya" h1 five times → invoke "freya" rune */
-let titleClicks = 0;
-let titleClickTimer = null;
-const titleEl = $('.title');
-if (titleEl) {
-  titleEl.addEventListener('click', () => {
-    titleClicks++;
-    clearTimeout(titleClickTimer);
-    titleClickTimer = setTimeout(() => { titleClicks = 0; }, 2000);
-    if (titleClicks >= 5) {
-      titleClicks = 0;
-      triggerRunicFlash();
+    .hero__glyph-diamond {
+      width: 8px;
+      height: 8px;
+      background-color: var(--accent-amber);
+      transform: rotate(45deg);
+      margin-left: -4px;
+      flex-shrink: 0;
     }
-  });
-}
 
-/* =====================================================================
-   Vibration helper (mobile)
-   ===================================================================== */
-function vibrate(ms) {
-  if (navigator.vibrate) {
-    try { navigator.vibrate(ms); } catch {}
-  }
-}
-
-/* =====================================================================
-   Keyboard shortcuts
-   ===================================================================== */
-window.addEventListener('keydown', (e) => {
-  const target = e.target;
-  const isFormField = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement;
-
-  if (e.key === '/' && !paletteOpen && !isFormField) {
-    e.preventDefault();
-    openPalette();
-    return;
-  }
-  if (paletteOpen) {
-    if (e.key === 'Escape') { closePalette(); return; }
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      paletteIndex = Math.min(paletteFiltered.length - 1, paletteIndex + 1);
-      renderPalette(paletteInput.value);
-      return;
+    /* ── Manifesto ─────────────────────────────────────── */
+    .manifesto {
+      min-height: 60vh;
+      padding: 8rem 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      margin-left: 40%;
+      border-top: 1px solid var(--border);
     }
-    if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      paletteIndex = Math.max(0, paletteIndex - 1);
-      renderPalette(paletteInput.value);
-      return;
+
+    .hairline-rule {
+      width: 40%;
+      height: 1px;
+      background: var(--border);
+      margin-bottom: 4rem;
     }
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      if (paletteFiltered[paletteIndex]) activatePaletteItem(paletteFiltered[paletteIndex]);
-      return;
+
+    .manifesto-line {
+      font-family: 'Playfair Display', serif;
+      font-weight: 300;
+      font-size: 32px;
+      color: var(--text-primary);
+      line-height: 1.6;
+      letter-spacing: -0.02em;
     }
-  }
 
-  if (!isFormField && (e.key === 'j' || e.key === 'k')) {
-    const dir = e.key === 'j' ? 1 : -1;
-    const next = Math.max(0, Math.min(sections.length - 1, currentPageIndex + dir));
-    const target = sections[next];
-    if (target) {
-      const top = target.getBoundingClientRect().top + window.scrollY;
-      if (lenis) lenis.scrollTo(top, { duration: 1.2 });
-      else window.scrollTo({ top, behavior: 'smooth' });
+    .manifesto-glyph {
+      font-size: 14px;
+      color: var(--accent-amber);
+      margin-top: 3rem;
+      opacity: 0.6;
     }
-  }
 
-  if ((e.key === '+' || e.key === '=') && !isFormField) {
-    e.preventDefault();
-    if (zoomIdx < ZOOM_STEPS.length - 1) { zoomIdx++; applyZoom(); }
-  }
-  if (e.key === '-' && !isFormField) {
-    e.preventDefault();
-    if (zoomIdx > 0) { zoomIdx--; applyZoom(); }
-  }
-
-  if (e.key === 'p' && !isFormField) {
-    e.preventDefault();
-    window.print();
-  }
-
-  if (e.key === 'd' && !isFormField) {
-    e.preventDefault();
-    const cur = document.documentElement.getAttribute('data-mode');
-    setMode(cur === 'dark' ? 'paper' : 'dark');
-  }
-
-  checkKonami(e);
-  checkFreya(e);
-  checkRagnarok(e);
-});
-
-if (paletteInput) {
-  paletteInput.addEventListener('input', (e) => {
-    paletteIndex = 0;
-    renderPalette(e.target.value);
-  });
-}
-
-$$('[data-palette-close]').forEach((el) => el.addEventListener('click', closePalette));
-$$('[data-shortcut]').forEach((el) => el.addEventListener('click', (e) => {
-  e.preventDefault();
-  $('#shortcuts')?.showModal();
-}));
-
-/* =====================================================================
-   Real-looking QR code (25x25 with proper finder patterns + alignment)
-   ===================================================================== */
-const qrGrid = $('#qr-grid');
-if (qrGrid) {
-  const SIZE = 25;
-  const seed = (i, j) => {
-    // Hash function for deterministic pseudo-random
-    const h = ((i * 73 + j * 137 + 11) * 31) % 100;
-    return h < 48;
-  };
-
-  // Helper: build a finder pattern (7x7 with 3x3 center) at (x, y) of the grid
-  const isFinder = (x, y) => {
-    if ((x < 7 && y < 7) || (x >= SIZE - 7 && y < 7) || (x < 7 && y >= SIZE - 7)) return true;
-    return false;
-  };
-  const isFinderFill = (x, y) => {
-    // 3 finder squares
-    const inSquare = (sx, sy) => {
-      const dx = x - sx, dy = y - sy;
-      if (dx < 0 || dx >= 7 || dy < 0 || dy >= 7) return null;
-      // outer ring (border) and inner 3x3 fill
-      const border = dx === 0 || dx === 6 || dy === 0 || dy === 6;
-      const inner  = dx >= 2 && dx <= 4 && dy >= 2 && dy <= 4;
-      const gap    = !border && !inner;
-      return border || inner;
-    };
-    if (x < 7 && y < 7) return inSquare(0, 0);
-    if (x >= SIZE - 7 && y < 7) return inSquare(SIZE - 7, 0);
-    if (x < 7 && y >= SIZE - 7) return inSquare(0, SIZE - 7);
-    return null;
-  };
-  // Alignment marker at (16, 16) — 5x5
-  const isAlignment = (x, y) => {
-    if (x < SIZE - 9 || x > SIZE - 5 || y < SIZE - 9 || y > SIZE - 5) return false;
-    const dx = x - (SIZE - 7);
-    const dy = y - (SIZE - 7);
-    const border = dx === 0 || dx === 4 || dy === 0 || dy === 4;
-    const center = dx === 2 && dy === 2;
-    return border || center;
-  };
-  // Timing patterns: alternating cells on row 6 and col 6
-  const isTiming = (x, y) => {
-    if (x === 6 && y >= 8 && y < SIZE - 8) return y % 2 === 0;
-    if (y === 6 && x >= 8 && x < SIZE - 8) return x % 2 === 0;
-    return false;
-  };
-
-  for (let i = 0; i < SIZE * SIZE; i++) {
-    const x = i % SIZE;
-    const y = Math.floor(i / SIZE);
-    const cell = document.createElement('span');
-    let filled = false;
-    const ff = isFinderFill(x, y);
-    if (ff !== null) {
-      filled = ff;
-    } else if (isAlignment(x, y)) {
-      filled = true;
-    } else if (isTiming(x, y)) {
-      filled = true;
-    } else {
-      filled = seed(x, y);
+    /* ── Works Grid ─────────────────────────────────────── */
+    .works {
+      padding: 6rem 2rem;
+      border-top: 1px solid var(--border);
     }
-    cell.className = filled ? 'qr__cell' : 'qr__cell qr__cell--off';
-    qrGrid.appendChild(cell);
-  }
-  // Set grid template dynamically
-  qrGrid.style.gridTemplateColumns = `repeat(${SIZE}, 1fr)`;
-  qrGrid.style.gridTemplateRows    = `repeat(${SIZE}, 1fr)`;
-}
 
-/* =====================================================================
-   Initial reveal of loader + ScrollTrigger refresh after fonts load
-   ===================================================================== */
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    hideLoader();
-    ScrollTrigger.refresh();
-    if (lenis) lenis.scrollTo(0, { immediate: true });
-  }, 700);
-});
+    .works-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
 
-if (document.fonts && document.fonts.ready) {
-  document.fonts.ready.then(() => ScrollTrigger.refresh());
-}
+    .work-card {
+      padding: 2rem;
+      cursor: pointer;
+      transition: background 300ms ease;
+      border-radius: 4px;
+    }
 
-let resizeTO;
-window.addEventListener('resize', () => {
-  clearTimeout(resizeTO);
-  resizeTO = setTimeout(() => ScrollTrigger.refresh(), 150);
-});
-</script>
+    .work-card:hover {
+      background: var(--hover-bg);
+    }
+
+    .card-number {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      font-family: 'Inter', sans-serif;
+      display: block;
+      margin-bottom: 1rem;
+    }
+
+    .card-title {
+      font-size: 28px;
+      color: var(--text-primary);
+      font-family: 'Playfair Display', serif;
+      font-weight: 350;
+      margin: 0;
+      transition: letter-spacing 300ms ease;
+      letter-spacing: 0.02em;
+    }
+
+    .work-card:hover .card-title {
+      letter-spacing: 0.04em;
+    }
+
+    .card-author {
+      font-size: 14px;
+      color: var(--text-secondary);
+      font-family: 'Inter', sans-serif;
+      margin: 0.3rem 0 1rem;
+    }
+
+    .card-stripe {
+      height: 3px;
+      width: 60px;
+      transition: width 300ms ease;
+      border-radius: 2px;
+      margin-bottom: 1rem;
+    }
+
+    .card-stripe.amber {
+      background: var(--accent-amber);
+    }
+
+    .card-stripe.rose {
+      background: var(--accent-rose);
+    }
+
+    .work-card:hover .card-stripe {
+      width: 100%;
+    }
+
+    .card-excerpt {
+      font-size: 16px;
+      color: var(--text-secondary);
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      margin: 0;
+    }
+
+    /* ── Capabilities ──────────────────────────────────── */
+    .capabilities {
+      padding: 6rem 2rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .capabilities-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 3rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .cap-card {
+      text-align: center;
+      padding: 2rem 1rem;
+    }
+
+    .cap-glyph {
+      margin-bottom: 1.5rem;
+      opacity: 0.7;
+    }
+
+    .cap-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      color: var(--text-primary);
+      font-weight: 350;
+      margin: 0 0 0.5rem;
+    }
+
+    .cap-desc {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* ── Vault ─────────────────────────────────────────── */
+    .vault {
+      min-height: 60vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 6rem 2rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .vault-headline {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(3rem, 10vw, 7.5rem);
+      font-weight: 250;
+      color: var(--text-primary);
+      letter-spacing: -0.03em;
+      margin: 0 0 2rem;
+    }
+
+    .vault-lock-container {
+      margin-bottom: 1.5rem;
+    }
+
+    .lock-svg {
+      display: block;
+    }
+
+    .lock-shape {
+      fill: none;
+      stroke: var(--accent-amber);
+      stroke-width: 2;
+    }
+
+    .lock-bar {
+      stroke: var(--accent-amber);
+      stroke-width: 2;
+    }
+
+    .check-path {
+      stroke: var(--accent-amber);
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .vault-tagline {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      color: var(--text-secondary);
+      letter-spacing: 0.05em;
+    }
+
+    /* ── Cross-Platform ──────────────────────────────────── */
+    .cross-platform {
+      min-height: 50vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      border-top: 1px solid var(--border);
+    }
+
+    .cross-platform::before,
+    .cross-platform::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40%;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .cross-platform::before {
+      top: 20%;
+    }
+
+    .cross-platform::after {
+      bottom: 20%;
+    }
+
+    .cp-content {
+      text-align: center;
+    }
+
+    .cp-line-1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      color: var(--text-primary);
+      font-weight: 300;
+      margin: 0 0 0.5rem;
+    }
+
+    .cp-line-2 {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+      letter-spacing: 0.08em;
+      margin: 0 0 1.5rem;
+    }
+
+    .cp-glyph {
+      font-size: 14px;
+      color: var(--accent-amber);
+      opacity: 0.5;
+    }
+
+    /* ── CTA ──────────────────────────────────────────────── */
+    .cta {
+      min-height: 40vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 2rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .cta-content {
+      text-align: center;
+    }
+
+    .cta-glyph {
+      font-size: 20px;
+      color: var(--accent-amber);
+      display: block;
+      margin-bottom: 1.5rem;
+      animation: glyphPulse 4s ease-in-out infinite;
+    }
+
+    @keyframes glyphPulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.7; }
+    }
+
+    .cta-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      color: var(--text-primary);
+      font-weight: 300;
+      cursor: pointer;
+      display: inline-block;
+      position: relative;
+      margin: 0 0 3rem;
+    }
+
+    .cta-text::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 50%;
+      transform: translateX(-50%) scaleX(0);
+      width: 100%;
+      height: 1px;
+      background: var(--accent-amber);
+      transition: transform 400ms ease;
+      transform-origin: center;
+    }
+
+    .cta-text:hover::after {
+      transform: translateX(-50%) scaleX(1);
+    }
+
+    .cta-footer {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      opacity: 0.4;
+      letter-spacing: 0.1em;
+    }
+
+    /* ── Responsive ─────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .hero__title { font-size: clamp(3rem, 20vw, 5rem) !important; }
+      .manifesto { padding: 4rem 1.5rem; margin-left: 10% !important; }
+      .manifesto-line { font-size: 24px !important; }
+      .works-grid { grid-template-columns: 1fr !important; gap: 1rem !important; }
+      .capabilities-grid { grid-template-columns: 1fr 1fr !important; gap: 1.5rem !important; }
+      .vault-headline { font-size: clamp(2.5rem, 12vw, 4rem) !important; }
+      .cta-text { font-size: 22px !important; }
+    }
+
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .works-grid { grid-template-columns: repeat(2, 1fr) !important; }
+      .capabilities-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    }
+
+    /* ── Utility ───────────────────────────────────────── */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Cursor Warmth Layer -->
+  <div id="cursor-warmth"></div>
+
+  <!-- Top Bar -->
+  <header class="top-bar" id="topBar">
+    <span class="left">FEYA</span>
+    <span class="right">Illuminate</span>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero" id="hero">
+    <h1 class="hero__title" id="heroTitle">Feya</h1>
+    <div class="hero__glyph" id="heroGlyph">
+      <span class="hero__glyph-line"></span>
+      <span class="hero__glyph-diamond"></span>
+    </div>
+  </section>
+
+  <!-- Manifesto -->
+  <section class="manifesto" data-section="manifesto">
+    <div class="manifesto-line hairline-rule"></div>
+    <p class="manifesto-line line-1">A highlight is a thought made visible.</p>
+    <p class="manifesto-line line-2">A document is a conversation with yourself.</p>
+    <p class="manifesto-line line-3">Feya is the instrument.</p>
+    <span class="manifesto-glyph">⎯◇</span>
+  </section>
+
+  <!-- Section: Works -->
+  <section class="works" data-section="works" id="section-works">
+    <div class="works-grid">
+      <div class="work-card" data-stripe="amber">
+        <span class="card-number">01</span>
+        <h3 class="card-title">Moby-Dick</h3>
+        <p class="card-author">Herman Melville</p>
+        <div class="card-stripe amber"></div>
+        <p class="card-excerpt">"Call me Ishmael."</p>
+      </div>
+      <div class="work-card" data-stripe="rose">
+        <span class="card-number">02</span>
+        <h3 class="card-title">Romeo and Juliet</h3>
+        <p class="card-author">William Shakespeare</p>
+        <div class="card-stripe rose"></div>
+        <p class="card-excerpt">"Parting is sweet sorrow."</p>
+      </div>
+      <div class="work-card" data-stripe="amber">
+        <span class="card-number">03</span>
+        <h3 class="card-title">Leaves of Grass</h3>
+        <p class="card-author">Walt Whitman</p>
+        <div class="card-stripe amber"></div>
+        <p class="card-excerpt">"I celebrate myself."</p>
+      </div>
+      <div class="work-card" data-stripe="rose">
+        <span class="card-number">04</span>
+        <h3 class="card-title">The Great Gatsby</h3>
+        <p class="card-author">F. Scott Fitzgerald</p>
+        <div class="card-stripe rose"></div>
+        <p class="card-excerpt">"Gatsby believed in green light."</p>
+      </div>
+      <div class="work-card" data-stripe="amber">
+        <span class="card-number">05</span>
+        <h3 class="card-title">Pride and Prejudice</h3>
+        <p class="card-author">Jane Austen</p>
+        <div class="card-stripe amber"></div>
+        <p class="card-excerpt">"It is a truth."</p>
+      </div>
+      <div class="work-card" data-stripe="rose">
+        <span class="card-number">06</span>
+        <h3 class="card-title">The Raven</h3>
+        <p class="card-author">Edgar Allan Poe</p>
+        <div class="card-stripe rose"></div>
+        <p class="card-excerpt">"Nevermore."</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section: Capabilities -->
+  <section class="capabilities" data-section="capabilities">
+    <div class="capabilities-grid">
+      <div class="cap-card">
+        <svg class="cap-glyph" viewBox="0 0 24 24" width="24" height="24">
+          <line x1="12" y1="2" x2="12" y2="22" stroke="var(--accent-amber)" stroke-width="1.5"/>
+          <circle cx="12" cy="12" r="10" fill="none" stroke="var(--text-tertiary)" stroke-width="0.5"/>
+        </svg>
+        <h3 class="cap-title">Read</h3>
+        <p class="cap-desc">Continuous scroll. Night mode. Every typeface preserved.</p>
+      </div>
+      <div class="cap-card">
+        <svg class="cap-glyph" viewBox="0 0 24 24" width="24" height="24">
+          <line x1="4" y1="12" x2="20" y2="12" stroke="var(--accent-amber)" stroke-width="1.5"/>
+          <circle cx="12" cy="12" r="10" fill="none" stroke="var(--text-tertiary)" stroke-width="0.5"/>
+        </svg>
+        <h3 class="cap-title">Highlight</h3>
+        <p class="cap-desc">Precision stroke. Subtle glow. Your library of marginalia.</p>
+      </div>
+      <div class="cap-card">
+        <svg class="cap-glyph" viewBox="0 0 24 24" width="24" height="24">
+          <circle cx="12" cy="12" r="10" fill="none" stroke="var(--accent-amber)" stroke-width="1.5"/>
+        </svg>
+        <h3 class="cap-title">Secure</h3>
+        <p class="cap-desc">Biometric lock. Encrypted at rest. Your documents, yours only.</p>
+      </div>
+      <div class="cap-card">
+        <svg class="cap-glyph" viewBox="0 0 24 24" width="24" height="24">
+          <path d="M12 2 L12 22 M2 12 L22 12 M4 4 L20 20 M20 4 L4 20" stroke="var(--accent-amber)" stroke-width="0.8" opacity="0.4"/>
+          <circle cx="12" cy="12" r="10" fill="none" stroke="var(--text-tertiary)" stroke-width="0.5"/>
+        </svg>
+        <h3 class="cap-title">Sync</h3>
+        <p class="cap-desc">Across devices. Offline-first. One library everywhere.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section: Vault -->
+  <section class="vault" data-section="vault">
+    <h2 class="vault-headline">Secure</h2>
+    <div class="vault-lock-container">
+      <svg class="lock-svg" viewBox="0 0 48 48" width="48" height="48">
+        <circle class="lock-shape" cx="24" cy="24" r="18" fill="none" stroke="var(--accent-amber)" stroke-width="2"/>
+        <line class="lock-bar" x1="24" y1="6" x2="24" y2="18" stroke="var(--accent-amber)" stroke-width="2"/>
+      </svg>
+    </div>
+    <p class="vault-tagline">Biometric. Encrypted. Yours alone.</p>
+  </section>
+
+  <!-- Section: Cross-Platform -->
+  <section class="cross-platform" data-section="cross-platform">
+    <div class="cp-content">
+      <p class="cp-line-1">Phone. Tablet. Desktop.</p>
+      <p class="cp-line-2">One library.</p>
+      <span class="cp-glyph">⎯◇</span>
+    </div>
+  </section>
+
+  <!-- Section: CTA -->
+  <section class="cta" data-section="cta">
+    <div class="cta-content">
+      <span class="cta-glyph">◇</span>
+      <p class="cta-text">Illuminate what matters</p>
+      <p class="cta-footer">Feya PDF © 2026</p>
+    </div>
+  </section>
+
+  <script>
+    (function() {
+      'use strict';
+
+      // ── Wait for everything to load ────────────────────
+      const init = function() {
+
+        // ── Lenis Smooth Scroll ──────────────────────────
+        const lenis = new Lenis({
+          duration: 0.6,
+          easing: function(t) {
+            return Math.min(1, 1.001 - Math.pow(2, -10 * t));
+          },
+          orientation: 'vertical',
+          smoothWheel: true,
+        });
+
+        // ── GSAP ticker integration ──────────────────────
+        gsap.ticker.add(function(time) {
+          lenis.raf(time * 1000);
+        });
+        gsap.ticker.lagSmoothing(0);
+
+        // ── Register ScrollTrigger ───────────────────────
+        gsap.registerPlugin(ScrollTrigger);
+
+        // ── Lenis ←→ ScrollTrigger bridge ────────────────
+        lenis.on('scroll', ScrollTrigger.update);
+
+        // ── Mouse Warmth ──────────────────────────────────
+        const warmth = document.getElementById('cursor-warmth');
+
+        function updateWarmth(e) {
+          const x = e.clientX;
+          const y = e.clientY;
+          warmth.style.background = `radial-gradient(600px circle at ${x}px ${y}px, rgba(212, 163, 115, 0.15), transparent 60%)`;
+        }
+
+        document.addEventListener('mousemove', updateWarmth);
+
+        // Also set a default center glow on load
+        warmth.style.background = `radial-gradient(600px circle at 50% 50%, rgba(212, 163, 115, 0.12), transparent 60%)`;
+
+        // ── Hero Fade-in Timeline ─────────────────────────
+        const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
+
+        tl.to('#heroTitle', {
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+        })
+        .to('#heroGlyph', {
+          opacity: 1,
+          y: 0,
+          duration: 0.6,
+        }, '-=0.3');
+
+        // ── Top Bar Scroll Behavior ──────────────────────
+        ScrollTrigger.create({
+          trigger: '.hero',
+          start: 'bottom-=100 top',
+          end: '+=100',
+          scrub: true,
+          animation: gsap.to('#topBar', {
+            opacity: 1,
+            y: 0,
+            duration: 1,
+          }),
+        });
+
+        // ── Manifesto Line Animations ────────────────────
+        gsap.fromTo('.line-1',
+          { opacity: 0, y: 20, letterSpacing: '-0.05em' },
+          {
+            scrollTrigger: {
+              trigger: '.manifesto',
+              start: 'top bottom',
+              toggleActions: 'play none none none',
+            },
+            opacity: 1,
+            y: 0,
+            letterSpacing: '0em',
+            duration: 0.6,
+            ease: 'power2.out',
+          }
+        );
+
+        gsap.fromTo('.line-2',
+          { opacity: 0, y: 20, letterSpacing: '-0.05em' },
+          {
+            scrollTrigger: {
+              trigger: '.manifesto',
+              start: 'top+=25% bottom',
+              toggleActions: 'play none none none',
+            },
+            opacity: 1,
+            y: 0,
+            letterSpacing: '0em',
+            duration: 0.6,
+            ease: 'power2.out',
+          }
+        );
+
+        gsap.fromTo('.line-3',
+          { opacity: 0, y: 20, letterSpacing: '-0.05em' },
+          {
+            scrollTrigger: {
+              trigger: '.manifesto',
+              start: 'top+=50% bottom',
+              toggleActions: 'play none none none',
+            },
+            opacity: 1,
+            y: 0,
+            letterSpacing: '0em',
+            duration: 0.6,
+            ease: 'power2.out',
+          }
+        );
+
+        // ── Works Grid Animation (row by row) ──────────────
+        const worksCards = document.querySelectorAll('.work-card');
+
+        if (worksCards.length > 0) {
+          // Row 1: indices 0–2, Row 2: indices 3–5
+          var row1Cards = gsap.utils.toArray(worksCards).slice(0, 3);
+          var row2Cards = gsap.utils.toArray(worksCards).slice(3, 6);
+
+          var worksTl = gsap.timeline({
+            scrollTrigger: {
+              trigger: '.works',
+              start: 'top 85%',
+              toggleActions: 'play none none none',
+            },
+            defaults: { duration: 0.5, ease: 'power2.out' },
+          });
+
+          // Row 1
+          worksTl.from(row1Cards, {
+            opacity: 0,
+            y: 40,
+          });
+
+          // Card numbers slide in for row 1
+          worksTl.from(row1Cards.map(function(c) { return c.querySelector('.card-number'); }), {
+            x: -20,
+            duration: 0.4,
+          }, '<');
+
+          // Row 2 (after 200ms stagger from row 1)
+          worksTl.from(row2Cards, {
+            opacity: 0,
+            y: 40,
+          }, '>+0.2');
+
+          // Card numbers slide in for row 2
+          worksTl.from(row2Cards.map(function(c) { return c.querySelector('.card-number'); }), {
+            x: -20,
+            duration: 0.4,
+          }, '<');
+        }
+
+        // ── Capabilities Scroll Animation ──────────────────
+        gsap.from('.cap-card', {
+          scrollTrigger: {
+            trigger: '.capabilities',
+            start: 'top 85%',
+            toggleActions: 'play none none none',
+          },
+          opacity: 0,
+          y: 30,
+          duration: 0.5,
+          stagger: 0.15,
+          ease: 'power2.out'
+        });
+
+        // ── Cross-Platform Scroll Animation ────────────────
+        gsap.from('.cp-content', {
+          scrollTrigger: {
+            trigger: '.cross-platform',
+            start: 'top 85%',
+          },
+          opacity: 0,
+          y: 20,
+          duration: 500,
+          ease: 'power2.out'
+        });
+
+        // ── CTA Scroll Animation ───────────────────────────
+        gsap.from('.cta-text', {
+          scrollTrigger: {
+            trigger: '.cta',
+            start: 'top 85%',
+          },
+          opacity: 0,
+          y: 15,
+          duration: 600,
+          ease: 'power2.out'
+        });
+
+        // ── Vault Lock Morph (GSAP ScrollTrigger scrub) ────
+        const lockBar = document.querySelector('.lock-bar');
+        const lockShape = document.querySelector('.lock-shape');
+
+        if (lockBar && lockShape) {
+          const vaultTl = gsap.timeline({
+            scrollTrigger: {
+              trigger: '.vault',
+              start: 'top center+=20%',
+              end: 'center center',
+              scrub: 1
+            }
+          });
+
+          // Morph: bar slides down and checkmark draws
+          vaultTl.to(lockBar, { attr: { y1: 30, y2: 30 }, duration: 0.5 })
+            .to(lockBar, { opacity: 0, duration: 0.3 }, '-=0.2')
+            .call(function() {
+              var check = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+              check.setAttribute('d', 'M16 24 L22 30 L32 18');
+              check.setAttribute('stroke', 'var(--accent-amber)');
+              check.setAttribute('stroke-width', '2');
+              check.setAttribute('fill', 'none');
+              check.setAttribute('stroke-linecap', 'round');
+              check.setAttribute('stroke-linejoin', 'round');
+              check.classList.add('check-path');
+              document.querySelector('.lock-svg').appendChild(check);
+              // Animate draw
+              var length = check.getTotalLength();
+              check.style.strokeDasharray = length;
+              check.style.strokeDashoffset = length;
+              gsap.to(check, { strokeDashoffset: 0, duration: 0.6, ease: 'power2.inOut' });
+            }, [], 0.5);
+        }
+
+        // ── Cleanup on page unload ───────────────────────
+        window.addEventListener('beforeunload', function() {
+          lenis.destroy();
+          ScrollTrigger.getAll().forEach(function(st) { st.kill(); });
+          document.removeEventListener('mousemove', updateWarmth);
+        });
+
+      };
+
+      // ── Ensure all deps are available ──────────────────
+      if (typeof Lenis !== 'undefined' && typeof gsap !== 'undefined') {
+        init();
+      } else {
+        // Retry after scripts load
+        var checkReady = setInterval(function() {
+          if (typeof Lenis !== 'undefined' && typeof gsap !== 'undefined') {
+            clearInterval(checkReady);
+            init();
+          }
+        }, 50);
+        // Safety timeout
+        setTimeout(function() { clearInterval(checkReady); }, 10000);
+      }
+
+    })();
+  </script>
 </body>
 </html>
